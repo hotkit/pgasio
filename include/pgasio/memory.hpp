@@ -17,7 +17,6 @@ namespace pgasio {
 
     /// Basic view of contiguous blocks of some type. Two views
     /// are the same only if they point to the same underlying memory.
-    /// This is a value type equivalent to a pointer and size.
     template<typename V>
     class array_view final {
         const V *m_data;
@@ -86,14 +85,6 @@ namespace pgasio {
         /// End at the beginning
         const_reverse_iterator rend() const {
             return const_reverse_iterator(begin());
-        }
-
-        /// Are two buffers equal
-        bool operator == (const array_view av) const {
-            return data() == av.data() && size() == av.size();
-        }
-        bool operator != (const array_view av) const {
-            return data() != av.data() || size() != size();
         }
     };
 
