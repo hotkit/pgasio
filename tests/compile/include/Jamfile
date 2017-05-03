@@ -1,2 +1,5 @@
 
 compile memory.cpp ;
+compile network.cpp ;
+compile recordset.cpp ;
+
