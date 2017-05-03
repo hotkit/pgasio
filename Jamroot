@@ -1,0 +1,12 @@
+import path ;
+using testing ;
+
+project :
+        requirements
+        <include>include
+    ;
+
+alias test :
+        tests/compile/include
+    ;
+explicit test ;
