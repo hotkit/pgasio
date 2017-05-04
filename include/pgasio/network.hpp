@@ -6,6 +6,9 @@
 #pragma once
 
 
+#include <pgasio/errors.hpp>
+#include <pgasio/memory.hpp>
+
 #include <boost/asio/read.hpp>
 #include <boost/asio/spawn.hpp>
 
@@ -23,9 +26,23 @@ namespace pgasio {
 
 
     struct header {
-        char type;
-        std::size_t total_size;
-        std::size_t body_size;
+        const char type;
+        const std::size_t total_size;
+        const std::size_t body_size;
+
+        header(char t, std::size_t ts)
+        : type(t), total_size(ts), body_size(ts - 4) {
+        }
+
+        template<typename S> inline
+        byte_view packet_body(S &socket, header head, boost::asio::yield_context &yield) {
+            assert(body.size() == 0 && body_size != 0);
+            body.reserve(body_size);
+            transfer(socket, body, body_size, yield);
+            return body;
+        }
+    private:
+        std::vector<unsigned char> body;
     };
 
 
@@ -35,7 +52,12 @@ namespace pgasio {
         transfer(socket, buffer, buffer.size(), yield);
         uint32_t bytes = (buffer[1] << 24) +
             (buffer[2] << 16) + (buffer[3] << 8) + buffer[4];
-        return header{char(buffer[0]), bytes, bytes - 4};
+        header head{char(buffer[0]), bytes};
+        if ( head.type == 'E' ) {
+            throw postgres_error();
+        } else {
+            return head;
+        }
     }
 
 
