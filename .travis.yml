@@ -19,7 +19,7 @@ install:
     - sudo apt-get install -y libboost-all-dev g++-6 clang-4.0 lldb-4.0 lld-4.0
     - 'if [ "$CXX" = "g++" ]; then echo "using gcc : 6 : g++-6 ;" > ~/user-config.jam; fi'
     - 'if [ "$CXX" = "clang++" ]; then echo "using clang : 4 : clang++-4.0 ;" > ~/user-config.jam; fi'
-    - git clone
+    - git clone git@github.com:KayEss/fost-boost.git
     - sed -i 's/git@github.com:/git:\/\/github.com\//' Boost/.gitmodules
     - cd Boost && git submodule update --init --recursive && cd ..
     - ./Boost/build 62
