@@ -12,7 +12,7 @@ env:
 install:
     - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
     - echo "http://apt.llvm.org/precise/ llvm-toolchain-precise main" > clang.list
-    - sudo mv clang.list /etc/apt/sources.list.d/clang.list/
+    - sudo mv clang.list /etc/apt/sources.list.d/
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y;
     - sudo apt-get update -qq
     - sudo apt-get install -y libboost-all-dev gcc-6 clang-4
