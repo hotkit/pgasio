@@ -25,4 +25,4 @@ install:
     - ./Boost/build 62
 
 script:
-    - bjam toolset=$CC -q test $FEATURE cxxflags=Boost/boost/include/boost-1_62
+    - bjam toolset=$CC -q test $FEATURE include=Boost/boost/include/boost-1_62
