@@ -7,8 +7,12 @@ compiler:
     - clang
 
 env:
+    - BOOST=59
+    - BOOST=90
+    - BOOST=61
     - BOOST=62
     - BOOST=63
+    - BOOST=64
 
 install:
     - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
