@@ -7,9 +7,8 @@ compiler:
     - clang
 
 env:
-    - FEATURE=release
-    - FEATURE=debug
     - BOOST=62
+    - BOOST=63
 
 install:
     - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
@@ -25,8 +24,8 @@ install:
     - cd boost_1_${BOOST}_0/
     - ./bootstrap.sh
     - cp bjam ..
-    - ./bjam toolset=$CC $FEATURE link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-system
+    - ./bjam toolset=$CC debug release link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-system
     - cd ..
 
 script:
-    - ./bjam bjam toolset=$CC -q test $FEATURE include=boost/include/boost-1_${BOOST}
+    - ./bjam bjam toolset=$CC -q test debug release include=boost/include/boost-1_${BOOST}
