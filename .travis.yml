@@ -1,8 +1,8 @@
 language: cpp
 
 compiler:
-    - gcc-6
-    - clang-4
+    - gcc
+    - clang
 
 env:
     - FEATURE=release
@@ -11,7 +11,8 @@ env:
 install:
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y;
     - sudo apt-get update -qq
-    - sudo apt-get install libboost-all-dev gcc-6 gcc-7
+    - sudo apt-get dist-upgrade -y
+    - sudo apt-get install libboost-all-dev
 
 script:
     - bjam toolset=$CC -q test $FEATURE
