@@ -2,6 +2,8 @@
 
 Postgres connectivity for modern C++
 
+[![Build Status](https://travis-ci.org/KayEss/pgasio.svg?branch=master)](https://travis-ci.org/KayEss/pgasio)
+
 Pgasio is designed for high performance connectivity to Postgres. It does only a few things, but it does them fast.
 
 * Use of array views and string views to cut down on unnecessary copies and memory allocations.
