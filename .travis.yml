@@ -9,6 +9,7 @@ env:
     - FEATURE=debug
 
 install:
+    - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y;
     - sudo apt-get update -qq
     - sudo apt-get dist-upgrade -y
