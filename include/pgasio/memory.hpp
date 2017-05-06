@@ -49,6 +49,9 @@ namespace pgasio {
         array_view(pointer_type a, std::size_t items)
         : m_data(a), m_size(items) {
         }
+        array_view(pointer_type b, pointer_type e)
+        : m_data(b), m_size(e - b) {
+        }
 
         /// The start of the data array
         pointer_type data() {
