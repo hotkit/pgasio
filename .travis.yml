@@ -24,7 +24,7 @@ install:
     - cd boost_1_${BOOST}_0/
     - ./bootstrap.sh
     - cp bjam ..
-    - ./bjam toolset=$CC debug release link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-system
+    - ./bjam toolset=$CC debug release link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-coroutine --with-system
     - cd ..
 
 script:
