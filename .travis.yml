@@ -8,4 +8,4 @@ install:
     - sudo apt-get install libboost-all-dev
 
 script:
-    - ./build toolset=$CC -q
+    - bjam toolset=$CC -q
