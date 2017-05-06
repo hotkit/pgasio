@@ -21,8 +21,6 @@ install:
     - echo "using gcc : 6 : g++-6 ;" >> ~/user-config.jam
     - echo "using clang : 4 : clang++-4.0 ;" >> ~/user-config.jam
     - git clone https://github.com/KayEss/fost-boost.git Boost
-    - sed -i 's/git@github.com:/git:\/\/github.com\//' Boost/.gitmodules
-    - cd Boost && git submodule update --init --recursive && cd ..
     - ./Boost/build ${BOOST} > /dev/null
 
 script:
