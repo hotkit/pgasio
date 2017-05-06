@@ -23,9 +23,8 @@ install:
     - tar xf boost.tar.bz2
     - cd boost_1_${BOOST}_0/
     - ./bootstrap.sh
-    - cp bjam ..
     - ./bjam toolset=$CC debug release link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-coroutine --with-system
     - cd ..
 
 script:
-    - ./bjam bjam toolset=$CC -q test debug release include=boost/include/boost-1_${BOOST}
+    - ./boost_1_${BOOST}_0/bjam toolset=$CC -q test debug release include=boost/include/boost-1_${BOOST}
