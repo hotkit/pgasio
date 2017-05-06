@@ -19,6 +19,10 @@ install:
     - sudo apt-get install -y libboost-all-dev g++-6 clang-4.0 lldb-4.0 lld-4.0
     - 'if [ "$CXX" = "g++" ]; then echo "using gcc : 6 : g++-6 ;" > ~/user-config.jam; fi'
     - 'if [ "$CXX" = "clang++" ]; then echo "using clang : 4 : clang++-4.0 ;" > ~/user-config.jam; fi'
+    - git clone
+    - sed -i 's/git@github.com:/git:\/\/github.com\//' Boost/.gitmodules
+    - cd Boost && git submodule update --init --recursive && cd ..
+    - ./Boost/build 62
 
 script:
-    - bjam toolset=$CC -q test $FEATURE
+    - bjam toolset=$CC -q test $FEATURE cxxflags=Boost/boost/include/boost-1_62
