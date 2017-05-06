@@ -25,6 +25,7 @@ install:
     - ./bootstrap.sh
     - ./bjam toolset=$CC debug release link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-coroutine --with-system
     - cd ..
+    - echo "boost-build boost_1_${BOOST}_0/  ;" > boost-build.jam
 
 script:
-    - ./boost_1_${BOOST}_0/bjam toolset=$CC -q test debug release include=boost/include/boost-1_${BOOST}
+    - BOOST_BUILD=boost_1_${BOOST}_0/ ./boost_1_${BOOST}_0/bjam toolset=$CC -q test debug release include=boost/include/boost-1_${BOOST}
