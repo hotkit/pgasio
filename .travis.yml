@@ -16,12 +16,12 @@ install:
     - sudo mv clang.list /etc/apt/sources.list.d/
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
     - sudo apt-get update -qq
-    - sudo apt-get install -y libboost-all-dev g++-6 clang-4.0 lldb-4.0 lld-4.0
+    - sudo apt-get install -qq -y libboost-all-dev g++-6 clang-4.0 lldb-4.0 lld-4.0
     - echo -e "using gcc : 6 : g++-6 ;\nusing clang : 4 : clang++-4.0 ;" > ~/user-config.jam
     - git clone https://github.com/KayEss/fost-boost.git Boost
     - sed -i 's/git@github.com:/git:\/\/github.com\//' Boost/.gitmodules
     - cd Boost && git submodule update --init --recursive && cd ..
-    - ./Boost/build 62
+    - ./Boost/build 62 > /dev/null
 
 script:
     - bjam toolset=$CC -q test $FEATURE include=Boost/boost/include/boost-1_62
