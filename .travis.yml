@@ -17,11 +17,16 @@ install:
     - sudo mv clang.list /etc/apt/sources.list.d/
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
     - sudo apt-get update -qq
-    - sudo apt-get install -qq -y libboost-all-dev g++-6 clang-4.0 lldb-4.0 lld-4.0
-    - echo "using gcc : 6 : g++-6 ;" >> ~/user-config.jam
-    - echo "using clang : 4 : clang++-4.0 ;" >> ~/user-config.jam
-    - git clone https://github.com/KayEss/fost-boost.git Boost
-    - ./Boost/build ${BOOST} > /dev/null
+    - sudo apt-get install -qq -y g++-6 clang-4.0 lldb-4.0 lld-4.0
+    - 'if [ "$CXX" = "g++" ]; then echo "using gcc : 6 : g++-6 ;" > ~/user-config.jam; fi'
+    - 'if [ "$CXX" = "clang++" ]; then echo "using clang : 4 : clang++-4.0 ;" > ~/user-config.jam; fi'
+    - wget -q -O boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.${BOOST}.0/boost_1_${BOOST}_0.tar.bz2/download
+    - tar xf boost.tar.bz2
+    - cd boost_1_${BOOST}_0/
+    - ./bootstrap.sh
+    - cp bjam ..
+    - ./bjam toolset=$CC $FEATURE link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-system
+    - cd ..
 
 script:
-    - bjam toolset=$CC -q test $FEATURE include=Boost/boost/include/boost-1_${BOOST}
+    - ./bjam bjam toolset=$CC -q test $FEATURE include=boost/include/boost-1_${BOOST}
