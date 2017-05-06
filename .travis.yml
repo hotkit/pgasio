@@ -17,8 +17,7 @@ install:
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
     - sudo apt-get update -qq
     - sudo apt-get install -y libboost-all-dev g++-6 clang-4.0 lldb-4.0 lld-4.0
-    - 'if [ "$CXX" = "g++" ]; then echo "using gcc : 6 : g++-6 ;" > ~/user-config.jam; fi'
-    - 'if [ "$CXX" = "clang++" ]; then echo "using clang : 4 : clang++-4.0 ;" > ~/user-config.jam; fi'
+    - "using gcc : 6 : g++-6 ;\nusing clang : 4 : clang++-4.0 ;" > ~/user-config.jam
     - git clone https://github.com/KayEss/fost-boost.git Boost
     - sed -i 's/git@github.com:/git:\/\/github.com\//' Boost/.gitmodules
     - cd Boost && git submodule update --init --recursive && cd ..
