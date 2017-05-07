@@ -16,7 +16,7 @@ env:
     - VARIANT=release BOOST=63
     - VARIANT=debug BOOST=63
     - VARIANT=release BOOST=64
-    - VARIANT=debugBOOST=64
+    - VARIANT=debug BOOST=64
 
 install:
     - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
