@@ -26,8 +26,8 @@ namespace pgasio {
         /// network packets and indexes the columns into those through
         /// the records member;
         explicit record_block(std::size_t column_count,
-            std::size_t bytes = 4u << 20, // 4MB of record data
-            std::size_t record_size = 2 << 11) // 2KB mean record size
+            std::size_t record_size = 512,  // Mean record size
+            std::size_t bytes = 4u << 20) // MB of record data
         : columns(column_count), buffer(bytes) {
             const auto expected_records = (bytes + record_size - 1) / record_size;
             records.reserve(columns * expected_records);
