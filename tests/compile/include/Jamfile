@@ -1,6 +1,7 @@
+import path ;
+import utility ;
 
-compile errors.cpp ;
-compile memory.cpp ;
-compile network.cpp ;
-compile recordset.cpp ;
-
+for cpp in [ path.glob tests/compile/include/ : *.cpp ] {
+    local filename = [ utility.basename $(cpp) ] ".cpp" ;
+    compile $(filename:J) ;
+}
