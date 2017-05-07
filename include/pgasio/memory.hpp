@@ -115,6 +115,10 @@ namespace pgasio {
         std::size_t base;
 
     public:
+        /// Create an empty slab
+        unaligned_slab()
+        : base{} {
+        }
         /// Create a slab for the requested number of bytes
         unaligned_slab(std::size_t bytes)
         : buffer(bytes), base{} {

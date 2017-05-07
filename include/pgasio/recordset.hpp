@@ -22,6 +22,11 @@ namespace pgasio {
         unaligned_slab buffer;
 
     public:
+        /// An empty block shows that there are no more to come
+        record_block()
+        : columns{} {
+        }
+
         /// The block is intiialised to hold a number of bytes of data row
         /// network packets and indexes the columns into those through
         /// the records member;
