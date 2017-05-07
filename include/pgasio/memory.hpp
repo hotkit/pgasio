@@ -123,6 +123,9 @@ namespace pgasio {
         /// Not copyable
         unaligned_slab(const unaligned_slab &) = delete;
         unaligned_slab &operator = (const unaligned_slab &) = delete;
+        /// Moveable
+        unaligned_slab(unaligned_slab &&) = default;
+        unaligned_slab &operator = (unaligned_slab &&) = default;
 
         /// How many bytes are still left in this slab
         std::size_t remaining() const {

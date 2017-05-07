@@ -31,6 +31,9 @@ namespace pgasio {
         decoder(byte_view b)
         : buffer(b) {
         }
+        decoder(raw_memory b)
+        : buffer(b.data(), b.size()) {
+        }
 
         std::size_t remaining() const {
             return buffer.size();
@@ -75,19 +78,19 @@ namespace pgasio {
         const std::size_t total_size;
         const std::size_t body_size;
 
+        header()
+        : type{}, total_size{}, body_size{} {
+        }
         header(char t, std::size_t ts)
         : type(t), total_size(ts), body_size(ts - 4) {
         }
 
         template<typename S> inline
-        decoder packet_body(S &socket, boost::asio::yield_context &yield) {
-            assert(body.size() == 0 && body_size != 0);
-            body = std::vector<unsigned char>(body_size);
+        std::vector<unsigned char> packet_body(S &socket, boost::asio::yield_context &yield) {
+            std::vector<unsigned char> body(body_size);
             transfer(socket, body, body_size, yield);
-            return byte_view(body);
+            return body;
         }
-    private:
-        std::vector<unsigned char> body;
     };
 
 
@@ -99,7 +102,8 @@ namespace pgasio {
             (buffer[2] << 16) + (buffer[3] << 8) + buffer[4];
         header head{char(buffer[0]), bytes};
         if ( head.type == 'E' ) {
-            auto packet = head.packet_body(socket, yield);
+            const auto body = head.packet_body(socket, yield);
+            decoder packet{byte_view{body}};
             postgres_error::messages_type messages;
             while ( packet.remaining() > 1 ) {
                 const auto type = packet.read_byte();

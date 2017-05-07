@@ -25,7 +25,7 @@ namespace pgasio {
         /// The block is intiialised to hold a number of bytes of data row
         /// network packets and indexes the columns into those through
         /// the records member;
-        record_block(std::size_t column_count,
+        explicit record_block(std::size_t column_count,
             std::size_t bytes = 4u << 20, // 4MB of record data
             std::size_t record_size = 2 << 11) // 2KB mean record size
         : columns(column_count), buffer(bytes) {
@@ -36,6 +36,9 @@ namespace pgasio {
         /// Not copyable
         record_block(const record_block &) = delete;
         record_block &operator = (const record_block &) = delete;
+        /// Moveable
+        record_block(record_block &&) = default;
+        record_block &operator = (record_block &&) = default;
 
         /// The number of bytes for row data still available in this block
         std::size_t remaining() const {
@@ -48,7 +51,47 @@ namespace pgasio {
             assert(bytes <= remaining());
             auto packet_data = buffer.allocate(bytes);
             transfer(socket, packet_data, bytes, yield);
-            // TODO: Decode the columns
+            decoder packet(packet_data);
+            [[maybe_unused]] const auto cols = packet.read_int16();
+            assert(cols == columns);
+            while ( packet.remaining() ) {
+                const auto bytes = packet.read_int32();
+                if ( bytes == -1 ) {
+                    records.push_back(byte_view());
+                } else {
+                    records.push_back(packet.read_bytes(bytes));
+                }
+            }
+            assert(records.size() % cols == 0);
+        }
+
+        /// Fill the block with data. Return zero if there is no more data to come
+        template<typename S>
+        std::size_t read_rows(S &socket, std::size_t bytes, boost::asio::yield_context &yield) {
+            do {
+                read_data_row(socket, bytes, yield);
+                auto next = packet_header(socket, yield);
+                if ( next.type == 'D' ) {
+                    bytes = next.body_size;
+                } else if ( next.type == 'C' ) {
+                    next.packet_body(socket, yield);
+                    auto finish{packet_header(socket, yield)};
+                    if ( finish.type == 'Z' ) {
+                        finish.packet_body(socket, yield);
+                        return 0;
+                    } else {
+                        throw std::logic_error(std::string("Expected Z after C, but got: ") + finish.type);
+                    }
+                } else {
+                    throw std::logic_error(std::string("Unknown packet type: ") + next.type);
+                }
+            } while ( bytes <= remaining() );
+            return bytes;
+        }
+
+        /// Return the current record fields
+        array_view<const byte_view> fields() const {
+            return records;
         }
     };
 
