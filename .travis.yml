@@ -7,11 +7,16 @@ compiler:
     - clang
 
 env:
-    - BOOST=60
-    - BOOST=61
-    - BOOST=62
-    - BOOST=63
-    - BOOST=64
+    - VARIANT=release BOOST=60
+    - VARIANT=debug BOOST=60
+    - VARIANT=release BOOST=61
+    - VARIANT=debug BOOST=61
+    - VARIANT=release BOOST=62
+    - VARIANT=debug BOOST=62
+    - VARIANT=release BOOST=63
+    - VARIANT=debug BOOST=63
+    - VARIANT=release BOOST=64
+    - VARIANT=debugBOOST=64
 
 install:
     - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
@@ -26,8 +31,8 @@ install:
     - tar xf boost.tar.bz2
     - cd boost_1_${BOOST}_0/
     - ./bootstrap.sh
-    - ./bjam toolset=$CC debug release link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-coroutine --with-system > build.log || cat build.log
+    - ./bjam toolset=$CC ${VARIANT} link=shared install cxxflags=-std=c++14 --layout=versioned --prefix=$(pwd)/../boost --with-coroutine --with-system > build.log || cat build.log
     - cd ..
 
 script:
-    - BOOST_BUILD_PATH=boost_1_${BOOST}_0/ ./boost_1_${BOOST}_0/bjam toolset=$CC -q test debug release include=boost/include/boost-1_${BOOST}
+    - BOOST_BUILD_PATH=boost_1_${BOOST}_0/ ./boost_1_${BOOST}_0/bjam toolset=$CC -q test ${VARIANT} include=boost/include/boost-1_${BOOST}
