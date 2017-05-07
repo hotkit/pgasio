@@ -7,8 +7,7 @@ compiler:
     - clang
 
 env:
-    - BOOST=59
-    - BOOST=90
+    - BOOST=60
     - BOOST=61
     - BOOST=62
     - BOOST=63
