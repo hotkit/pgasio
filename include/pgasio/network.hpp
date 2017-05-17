@@ -11,6 +11,7 @@
 
 #include <boost/asio/read.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/streambuf.hpp>
 
 #include <array>
 
@@ -121,6 +122,61 @@ namespace pgasio {
             return head;
         }
     }
+
+
+    /// Helper to assemble a command packet to be sent to Postgres
+    class command {
+        char instruction;
+        boost::asio::streambuf body;
+    public:
+        /// Construct a command. The very first packet sent after connecting
+        /// doesn't have an instruction value. Send zero for this case. The
+        /// `handshake` function will handle this for you.
+        command(char type)
+        : instruction(type) {
+        }
+
+        /// Add the specified bytes to the body
+        template<typename B, typename = std::enable_if_t<std::is_integral<B>::value>>
+        void bytes(array_view<B> av) {
+            static_assert(sizeof(B) == 1, "Must add an array of bytes");
+            body.sputn(av.data(), av.size());
+        }
+
+        /// Add a single byte to the body
+        template<typename B, typename = std::enable_if_t<std::is_integral<B>::value>>
+        void byte(B b) {
+            static_assert(sizeof(B) == 1, "Must add a single byte");
+            body.sputc(b);
+        }
+
+        /// Send the current command to Postgres. Return the body size sent
+        template<typename S>
+        std::size_t send(S &socket, boost::asio::yield_context &yield) {
+            const std::size_t bytes = body.size() + 4;
+            std::array<unsigned char, 5> h5;
+            std::array<unsigned char, 4> h4;
+            raw_memory header;
+            std::size_t offset;
+            if ( instruction ) {
+                header = h5;
+                header[0] = instruction;
+                offset = 1;
+            } else {
+                header = h4;
+                offset = 0;
+            }
+            header[offset + 0] = (bytes & 0xff00'0000) >> 24;
+            header[offset + 1] = (bytes & 0x00ff'0000) >> 16;
+            header[offset + 2] = (bytes & 0x0000'ff00) >> 8;
+            header[offset + 3] = (bytes & 0x0000'00ff);
+            std::array<boost::asio::streambuf::const_buffers_type, 2>
+                data{{boost::asio::streambuf::const_buffers_type(header.data(), header.size()),
+                    body.data()}};
+            async_write(socket, data, yield);
+            return body.size();
+        }
+    };
 
 
 }
