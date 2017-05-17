@@ -19,23 +19,39 @@ namespace pgasio {
     /// Perform a handshake that assumes to authentication or connection
     /// options are needed.
     template<typename S> inline
-    connection<S> handshake(S &&socket, boost::asio::yield_context &yield) {
-        return connection<S>(std::move(socket));
+    connection<S> handshake(
+        S socket,
+        const char *user, const char *database,
+        boost::asio::yield_context &yield
+    ) {
+        command cmd{0}; // The initial connect doesn't use a packet type char
+        cmd.int32(0x0003'0000);
+        cmd.c_str("user");
+        cmd.c_str(user);
+        if ( database != nullptr && database[0] != 0 ) {
+            cmd.c_str("database");
+            cmd.c_str(database);
+        }
+        cmd.int8(0);
+        cmd.send(socket, yield);
+        std::unordered_map<std::string, std::string> settings;
+        return connection<S>(std::move(socket), std::move(settings));
     }
 
 
     /// The connection to the database
     template<typename S>
     class connection {
-        friend connection<S> handshake<>(S &&, boost::asio::yield_context &);
+        friend connection<S> handshake<>(S, const char *, const char *, boost::asio::yield_context &);
 
-        S socket;
+        std::unordered_map<std::string, std::string> settings;
 
-        connection(S &&s)
-        : socket(std::move(s)) {
+        connection(S s, std::unordered_map<std::string, std::string> set)
+        : settings(std::move(set)), socket(std::move(s)) {
         }
 
     public:
+        S socket;
     };
 
 
