@@ -150,6 +150,32 @@ namespace pgasio {
             body.sputc(b);
         }
 
+        /// Write an in8
+        void int8(int8_t c) {
+            byte(c);
+        }
+        /// Write an int16
+        void int16(int16_t i) {
+            int8((i & 0xff00) >> 8);
+            int8(i & 0x00ff);
+        }
+        /// Write an int32
+        void int32(int32_t i) {
+            int8((i & 0xff00'0000) >> 24);
+            int8((i & 0x00ff'0000) >> 16);
+            int8((i & 0x0000'ff00) >> 8);
+            int8(i & 0x0000'00ff);
+        }
+
+        /// Send a C string, including the terminating NIL character
+        void c_str(const char *s) {
+            while (*s) {
+                byte(*s++);
+            }
+            int8(0);
+        }
+
+
         /// Send the current command to Postgres. Return the body size sent
         template<typename S>
         std::size_t send(S &socket, boost::asio::yield_context &yield) {
