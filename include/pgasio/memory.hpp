@@ -74,7 +74,10 @@ namespace pgasio {
         }
 
         /// Index into the arraay
-        const V &operator [] (std::size_t index) {
+        V &operator [] (std::size_t index) {
+            return data()[index];
+        }
+        const V &operator [] (std::size_t index) const {
             return data()[index];
         }
 
