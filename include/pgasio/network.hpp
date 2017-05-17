@@ -18,6 +18,7 @@
 namespace pgasio {
 
 
+    /// Transfer some number of bytes from the socket into the buffer
     template<typename S, typename B> inline
     void transfer(S &socket, B &buffer, std::size_t bytes, boost::asio::yield_context &yield) {
         boost::asio::async_read(socket, boost::asio::buffer(buffer.data(), buffer.size()),
@@ -25,6 +26,8 @@ namespace pgasio {
     };
 
 
+    /// Decode information that comes in over the network according to the
+    /// Postgres version 3 protocol.
     class decoder {
         byte_view buffer;
     public:
@@ -73,6 +76,8 @@ namespace pgasio {
     };
 
 
+    /// An inbound packet header. The packet body must be read. For data row
+    /// packets this would normally be done through the
     struct header {
         const char type;
         const std::size_t total_size;
@@ -94,6 +99,8 @@ namespace pgasio {
     };
 
 
+    /// Read a packet header, but not the packet body. If the packet is an
+    /// error message then turn it into an exception.
     template<typename S> inline
     auto packet_header(S &socket, boost::asio::yield_context &yield) {
         std::array<unsigned char, 5> buffer;
