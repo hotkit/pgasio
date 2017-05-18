@@ -45,7 +45,7 @@ namespace pgasio {
         : current(c) {
         }
 
-        recordset recordset(boost::asio::yield_context &yield) {
+        pgasio::recordset recordset(boost::asio::yield_context &yield) {
             return pgasio::recordset{current, yield};
         }
     };
