@@ -9,9 +9,9 @@
 
 #include <f5/threading/channel.hpp>
 #include <f5/threading/reactor.hpp>
+#include <f5/threading/sync.hpp>
 
-#include <pgasio/connection.hpp>
-#include <pgasio/recordset.hpp>
+#include <pgasio/exec.hpp>
 
 
 int main(int argc, char *argv[]) {
@@ -49,15 +49,29 @@ int main(int argc, char *argv[]) {
     }
 
     /// Set up the reactor thread pool and the channels we'll need
-    f5::boost_asio::reactor_pool reactor;
+    f5::boost_asio::reactor_pool reactor{[]() {
+        std::cerr << "An error occured\n";
+        auto ep = std::current_exception();
+        if ( ep ) {
+            try {
+                std::rethrow_exception(ep);
+            } catch ( std::exception &e ) {
+                std::cerr << e.what() << std::endl;
+            }
+        }
+        std::exit(2);
+        return false;
+    }};
     f5::boost_asio::channel<pgasio::record_block> blocks{reactor.get_io_service(), reactor.size()};
-    f5::boost_asio::channel<std::pair<std::size_t, std::string>> csj{reactor.get_io_service(), reactor.size()};
+    f5::boost_asio::channel<std::string> csj{reactor.get_io_service(), reactor.size()};
 
     /// Database conversation coroutine
     boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
         auto cnx = pgasio::handshake(
             pgasio::unix_domain_socket(reactor.get_io_service(), path, yield),
             user, database, yield);
+        auto results = pgasio::exec(cnx, sql, yield);
+        auto records = results.recordset(yield);
     });
 
     /// Workers for converting the raw data into CSJ
@@ -67,8 +81,15 @@ int main(int argc, char *argv[]) {
     }
 
     /// Write the CSJ blocks out to stdout in the right order
-    boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
-    });
+    f5::sync s;
+    boost::asio::spawn(reactor.get_io_service(), s([&](auto yield) {
+        while ( true ) {
+            auto chunk = csj.consume(yield);
+            if ( chunk.empty() ) return;
+            std::cout << chunk;
+        };
+    }));
+    s.wait();
 
     return 0;
 }
