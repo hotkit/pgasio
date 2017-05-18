@@ -27,7 +27,12 @@ namespace pgasio {
 
     /// A wrapper around the basic block delivery mechanism
     class recordset {
+        header current;
     public:
+        recordset(header c, boost::asio::yield_context &yield)
+        : current(c) {
+        }
+
         const std::vector<column_meta> columns;
     };
 
