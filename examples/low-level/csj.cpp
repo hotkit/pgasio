@@ -87,7 +87,7 @@ int main(int argc, char *argv[]) {
             auto chunk = csj.consume(yield);
             if ( chunk.empty() ) return;
             std::cout << chunk;
-        };
+        }
     }));
     s.wait();
 
