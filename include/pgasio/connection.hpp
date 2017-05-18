@@ -8,6 +8,8 @@
 
 #include <pgasio/network.hpp>
 
+#include <boost/asio/local/stream_protocol.hpp>
+
 
 namespace pgasio {
 
@@ -79,6 +81,18 @@ namespace pgasio {
         const int32_t process_id;
         const int32_t secret;
     };
+
+
+    /// Return a unix domain socket for the given location
+    template<typename L> inline
+    auto unix_domain_socket(
+        boost::asio::io_service &ios, L loc, boost::asio::yield_context &yield
+    ) {
+        boost::asio::local::stream_protocol::socket socket{ios};
+        boost::asio::local::stream_protocol::endpoint ep(loc);
+        socket.async_connect(ep, yield);
+        return socket;
+    }
 
 
 }

@@ -10,6 +10,9 @@
 #include <f5/threading/channel.hpp>
 #include <f5/threading/reactor.hpp>
 
+#include <pgasio/connection.hpp>
+#include <pgasio/recordset.hpp>
+
 
 int main(int argc, char *argv[]) {
     /// The parameters we need to use. This is all legacy C stuff :(
@@ -22,8 +25,7 @@ int main(int argc, char *argv[]) {
     for ( std::size_t a{1}; a < argc; ++a ) {
         using namespace std::string_literals;
         auto read_opt = [&](char opt) {
-            ++a;
-            if ( a >= argc ) throw std::runtime_error("Missing option after -"s + opt);
+            if ( ++a >= argc ) throw std::runtime_error("Missing option after -"s + opt);
             return argv[a];
         };
         if ( argv[a] == "-d"s ) {
@@ -48,14 +50,25 @@ int main(int argc, char *argv[]) {
 
     /// Set up the reactor thread pool and the channels we'll need
     f5::boost_asio::reactor_pool reactor;
-    f5::channel<pgasio::read_block> blocks;
-    f5::channel<std::pair<std::size_t, std::string>> csj;
+    f5::boost_asio::channel<pgasio::record_block> blocks{reactor.get_io_service(), reactor.size()};
+    f5::boost_asio::channel<std::pair<std::size_t, std::string>> csj{reactor.get_io_service(), reactor.size()};
 
     /// Database conversation coroutine
+    boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
+        auto cnx = pgasio::handshake(
+            pgasio::unix_domain_socket(reactor.get_io_service(), path, yield),
+            user, database, yield);
+    });
 
     /// Workers for converting the raw data into CSJ
+    for ( std::size_t t{}; t < reactor.size(); ++t ) {
+        boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
+        });
+    }
 
     /// Write the CSJ blocks out to stdout in the right order
+    boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
+    });
 
     return 0;
 }
