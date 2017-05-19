@@ -55,6 +55,10 @@ namespace pgasio {
         std::size_t remaining() const {
             return buffer.remaining();
         }
+        /// The number of bytes that have been used in the block
+        std::size_t used_bytes() const {
+            return buffer.allocated();
+        }
 
         /// Read the next data packet into the block
         template<typename S>
