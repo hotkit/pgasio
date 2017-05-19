@@ -38,6 +38,9 @@ namespace pgasio {
         decoder(raw_memory b)
         : buffer(b.data(), b.size()) {
         }
+        decoder(const std::vector<unsigned char> &b)
+        : decoder(byte_view(b)) {
+        }
 
         std::size_t remaining() const {
             return buffer.size();
