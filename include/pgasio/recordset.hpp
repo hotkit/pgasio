@@ -45,6 +45,12 @@ namespace pgasio {
         record_block(record_block &&) = default;
         record_block &operator = (record_block &&) = default;
 
+        /// Allow conversion to a bool context. Returns true if the block
+        /// contains data
+        operator bool () const {
+            return columns > 0;
+        }
+
         /// The number of bytes for row data still available in this block
         std::size_t remaining() const {
             return buffer.remaining();
