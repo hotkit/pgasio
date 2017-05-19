@@ -91,18 +91,6 @@ int main(int argc, char *argv[]) {
     /// Set up the reactor thread pool and the channels we'll need
     f5::boost_asio::reactor_pool reactor{[]() {
         std::cerr << "An error occured\n";
-        auto ep = std::current_exception();
-        if ( ep ) {
-            try {
-                std::rethrow_exception(ep);
-            } catch ( std::exception &e ) {
-                std::cerr << e.what() << std::endl;
-            } catch ( ... ) {
-                std::cerr << "Unknown exception" << std::endl;
-            }
-        } else {
-            std::cerr << "No exception was found" << std::endl;
-        }
         std::exit(2);
         return false;
     }};
@@ -111,11 +99,13 @@ int main(int argc, char *argv[]) {
         pgasio::array_view<const pgasio::column_meta> columns;
         pgasio::record_block block;
     };
-    f5::boost_asio::channel<rblock> blocks{reactor.get_io_service(), reactor.size()};
-    f5::boost_asio::channel<std::string> csj{reactor.get_io_service(), reactor.size()};
+    auto blocks = std::make_shared<
+        f5::boost_asio::channel<rblock>>(reactor.get_io_service(), reactor.size());
+    auto csj = std::make_shared<
+        f5::boost_asio::channel<std::string>>(reactor.get_io_service(), reactor.size());
 
     /// Database conversation coroutine
-    boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
+    boost::asio::spawn(reactor.get_io_service(), [=, &reactor](auto yield) {
         auto cnx = pgasio::handshake(
             pgasio::unix_domain_socket(reactor.get_io_service(), path, yield),
             user, database, yield);
@@ -133,16 +123,16 @@ int main(int argc, char *argv[]) {
         while ( cnx.socket.is_open() ) {
             auto block = records.next_block(yield);
             const bool good = block;
-            blocks.produce({block_number++, records.columns, std::move(block)}, yield);
+            blocks->produce({block_number++, records.columns, std::move(block)}, yield);
             if ( not good ) return;
         }
     });
 
     /// Workers for converting the raw data into CSJ
     for ( std::size_t t{}; t < reactor.size(); ++t ) {
-        boost::asio::spawn(reactor.get_io_service(), [&](auto yield) {
+        boost::asio::spawn(reactor.get_io_service(), [blocks, csj](auto yield) {
             while ( true ) {
-                auto batch = blocks.consume(yield);
+                auto batch = blocks->consume(yield);
                 if ( batch.block ) {
                     std::string text;
                     text.reserve(batch.block.used_bytes());
@@ -185,9 +175,10 @@ int main(int argc, char *argv[]) {
                         }
                         text += '\n';
                     }
-                    csj.produce(text, yield);
+                    csj->produce(text, yield);
                 } else {
-                    csj.produce(std::string(), yield);
+                    csj->produce(std::string(), yield);
+                    return;
                 }
             }
         });
@@ -195,17 +186,14 @@ int main(int argc, char *argv[]) {
 
     /// Write the CSJ blocks out to stdout in the right order
     f5::sync s;
-    boost::asio::spawn(reactor.get_io_service(), s([&](auto yield) {
+    boost::asio::spawn(reactor.get_io_service(), s([csj](auto yield) {
         while ( true ) {
-            auto chunk = csj.consume(yield);
+            auto chunk = csj->consume(yield);
             if ( chunk.empty() ) return;
             std::cout << chunk;
         }
     }));
     s.wait();
-
-    blocks.close();
-    csj.close();
 
     return 0;
 }
