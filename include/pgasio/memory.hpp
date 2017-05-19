@@ -138,6 +138,10 @@ namespace pgasio {
         std::size_t remaining() const {
             return buffer.size() - base;
         }
+        /// How many bytes have been allocated in this slab
+        std::size_t allocated() const {
+            return base;
+        }
 
         /// Allocate a chunk of the slab of the requested size and returns
         /// a pointer to it
