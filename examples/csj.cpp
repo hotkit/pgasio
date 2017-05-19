@@ -62,7 +62,7 @@ int main(int argc, char *argv[]) {
     const char *sql = nullptr;
 
     /// Go through the command line and pull the details out
-    for ( std::size_t a{1}; a < argc; ++a ) {
+    for ( auto a{1}; a < argc; ++a ) {
         using namespace std::string_literals;
         auto read_opt = [&](char opt) {
             if ( ++a >= argc ) throw std::runtime_error("Missing option after -"s + opt);
