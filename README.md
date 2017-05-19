@@ -10,7 +10,7 @@ Pgasio is designed for high performance connectivity to Postgres. It does only a
 * Only supports Unix domain sockets. If you want to connect remotely then pgPool is your friend.
 * C++14, Boost ASIO and Boost co-routine to make the code fast efficient and easy to read.
 
-Look at the [examples](./examples/README.md) to see how it can be used.
+Look at the [examples](./examples/) to see how it can be used.
 
 
 ## Roadmap
