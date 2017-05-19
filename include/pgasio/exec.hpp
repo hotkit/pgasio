@@ -26,36 +26,80 @@ namespace pgasio {
 
 
     /// A wrapper around the basic block delivery mechanism
+    template<typename S>
     class recordset {
-        header current;
+        connection<S> &cnx;
+        std::size_t next_row_data_size;
     public:
-        recordset(header c, boost::asio::yield_context &yield)
-        : current(c) {
+        recordset(connection<S> &cnx, header c, boost::asio::yield_context &yield)
+        : cnx(cnx), next_row_data_size{}, columns([&]() {
+                std::vector<column_meta> columns;
+                auto packet = c.packet_body(cnx.socket, yield);
+                decoder description(packet);
+                const auto count = description.read_int16();
+                columns.reserve(count);
+                while ( columns.size() != count ) {
+                    column_meta col;
+                    col.name = description.read_string();
+                    col.table_oid = description.read_int32();
+                    col.table_column = description.read_int16();
+                    col.field_type_oid = description.read_int32();
+                    col.data_size = description.read_int16();
+                    col.type_modifier = description.read_int32();
+                    col.format_code = description.read_int16();
+                    columns.push_back(col);
+                }
+                return columns;
+            }())
+        {
+            while ( cnx.socket.is_open() ) {
+                auto header = pgasio::packet_header(cnx.socket, yield);
+                switch ( header.type ) {
+                case 'D':
+                    next_row_data_size = header.body_size;
+                    return;
+                default:
+                    throw std::runtime_error(
+                        std::string("Wasn't expecting this packet type: ") + header.type);
+                }
+            }
+            throw std::runtime_error("Connection closed before getting a recordset back");
         }
 
         const std::vector<column_meta> columns;
+
+        pgasio::record_block next_block(boost::asio::yield_context &yield) {
+            if ( next_row_data_size ) {
+                pgasio::record_block block{columns.size()};
+                next_row_data_size = block.read_rows(cnx.socket, next_row_data_size, yield);
+                return block;
+            } else {
+                return pgasio::record_block{};
+            }
+        }
     };
 
 
     /// A wrapper that allows access to the recordsets
+    template<typename S>
     class resultset {
+        connection<S> &cnx;
         header current;
     public:
-        resultset(header c)
-        : current(c) {
+        resultset(connection<S> &cnx, header c)
+        : cnx(cnx), current(c) {
         }
 
-        pgasio::recordset recordset(boost::asio::yield_context &yield) {
-            return pgasio::recordset{current, yield};
+        pgasio::recordset<S> recordset(boost::asio::yield_context &yield) {
+            assert(current.type == 'T');
+            return pgasio::recordset<S>{cnx, current, yield};
         }
     };
 
 
     /// Execute an SQL command and return the results
     template<typename S>
-    inline resultset exec(connection<S> &cnx, const char *sql, boost::asio::yield_context &yield) {
-        using namespace std::string_literals;
-
+    inline resultset<S> exec(connection<S> &cnx, const char *sql, boost::asio::yield_context &yield) {
         command query('Q');
         query.c_str(sql);
         query.send(cnx.socket, yield);
@@ -63,9 +107,9 @@ namespace pgasio {
             auto header = pgasio::packet_header(cnx.socket, yield);
             switch ( header.type ) {
             case 'T':
-                return resultset{header};
+                return resultset<S>{cnx, header};
             default:
-                throw std::runtime_error("Wasn't expecting this packet type: "s + header.type);
+                throw std::runtime_error(std::string("Wasn't expecting this packet type: ") + header.type);
             }
         }
         throw std::runtime_error("Connection closed before getting a recordset back");
