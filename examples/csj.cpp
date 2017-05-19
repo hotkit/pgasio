@@ -168,6 +168,7 @@ int main(int argc, char *argv[]) {
                                     text += "**** " +
                                         std::to_string(batch.columns[index].field_type_oid) +" **** ";
                                 case 25: // text
+                                case 1042: // bpchar
                                 case 1043: // varchar
                                     json_string(text, cols[index]);
                                 }
