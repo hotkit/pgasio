@@ -76,9 +76,13 @@ namespace pgasio {
         }
 
     public:
+        /// The connection socket
         S socket;
+        /// The settings in effect when the connection was first opened
         const std::unordered_map<std::string, std::string> settings;
+        /// The process ID we're connected to
         const int32_t process_id;
+        /// The secret used for cancellations
         const int32_t secret;
     };
 
