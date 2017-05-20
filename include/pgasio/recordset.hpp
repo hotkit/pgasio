@@ -67,8 +67,7 @@ namespace pgasio {
             auto packet_data = buffer.allocate(bytes);
             transfer(socket, packet_data, bytes, yield);
             decoder packet(packet_data);
-            [[maybe_unused]] const auto cols = packet.read_int16();
-            assert(cols == columns);
+            packet.read_int16();
             while ( packet.remaining() ) {
                 const auto bytes = packet.read_int32();
                 if ( bytes == -1 ) {
@@ -77,7 +76,7 @@ namespace pgasio {
                     records.push_back(packet.read_bytes(bytes));
                 }
             }
-            assert(records.size() % cols == 0);
+            assert(records.size() % columns == 0);
         }
 
         /// Fill the block with data. Return zero if there is no more data to come
