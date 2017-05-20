@@ -36,7 +36,7 @@ namespace pgasio {
                 std::vector<column_meta> columns;
                 auto packet = c.packet_body(cnx.socket, yield);
                 decoder description(packet);
-                const auto count = description.read_int16();
+                const std::size_t count = description.read_int16();
                 columns.reserve(count);
                 while ( columns.size() != count ) {
                     column_meta col;
