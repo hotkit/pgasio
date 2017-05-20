@@ -29,10 +29,12 @@ namespace pgasio {
     template<typename S>
     class recordset {
         connection<S> &cnx;
+        std::vector<column_meta> cols;
         std::size_t next_row_data_size;
     public:
         recordset(connection<S> &cnx, header c, boost::asio::yield_context &yield)
-        : cnx(cnx), next_row_data_size{}, columns([&]() {
+        : cnx(cnx),
+            cols([&]() {
                 std::vector<column_meta> columns;
                 auto packet = c.packet_body(cnx.socket, yield);
                 decoder description(packet);
@@ -50,7 +52,8 @@ namespace pgasio {
                     columns.push_back(col);
                 }
                 return columns;
-            }())
+            }()),
+            next_row_data_size{}
         {
             while ( cnx.socket.is_open() ) {
                 auto header = pgasio::packet_header(cnx.socket, yield);
@@ -66,11 +69,13 @@ namespace pgasio {
             throw std::runtime_error("Connection closed before getting a recordset back");
         }
 
-        const std::vector<column_meta> columns;
+        array_view<const column_meta> columns() const {
+            return cols;
+        }
 
         pgasio::record_block next_block(boost::asio::yield_context &yield) {
             if ( next_row_data_size ) {
-                pgasio::record_block block{columns.size()};
+                pgasio::record_block block{cols.size()};
                 next_row_data_size = block.read_rows(cnx.socket, next_row_data_size, yield);
                 return block;
             } else {

@@ -112,7 +112,7 @@ int main(int argc, char *argv[]) {
         auto results = pgasio::exec(cnx, sql, yield);
         auto records = results.recordset(yield);
         auto comma = std::experimental::make_ostream_joiner(std::cout, ",");
-        for ( const auto &col : records.columns ) {
+        for ( const auto &col : records.columns() ) {
             std::string escaped;
             json_string(escaped, pgasio::byte_view(
                 reinterpret_cast<const unsigned char *>(col.name.data()), col.name.size()));
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
         while ( cnx.socket.is_open() ) {
             auto block = records.next_block(yield);
             const bool good = block;
-            blocks->produce({block_number++, records.columns, std::move(block)}, yield);
+            blocks->produce({block_number++, records.columns(), std::move(block)}, yield);
             if ( not good ) return;
         }
     });
