@@ -36,5 +36,5 @@ install:
     - git clone -b feature/channel https://github.com/KayEss/f5-threading.git
 
 script:
-    - BOOST_BUILD_PATH=boost_1_${BOOST}_0/ ./boost_1_${BOOST}_0/bjam toolset=$CC -q test examples ${VARIANT} include=boost/include/boost-1_${BOOST} include=f5-threading/include search=boost
+    - BOOST_BUILD_PATH=boost_1_${BOOST}_0/ ./boost_1_${BOOST}_0/bjam toolset=$CC -q test examples ${VARIANT} include=boost/include include=f5-threading/include search=boost
 
