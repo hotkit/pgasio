@@ -1,7 +1,7 @@
 # pgasio Headers
 
 
-_`[connection.hpp](./connection.hpp)`_
+## [`connection.hpp`](./connection.hpp#L9)
 
 A connection to a Postgres server can be created by calling `handshake` having already opened a suitable socket for it to use. This will return a `connection` object which will contain information provided by the server duing the connection set up.
 
@@ -12,13 +12,13 @@ There is also a helper function, `unix_domain_socket`, which can be used to crea
         "myusername", "somedb", yield);
 
 
-**`[errors.hpp](./errors.hpp)`**
+## [`errors.hpp`](./errors.hpp#L9)
 
-###`[exec.hpp](./exec.hpp)` ###
+## [`exec.hpp`](./exec.hpp#L9)
 
-_`[memory.hpp](./memory.hpp)`_
+## [`memory.hpp`](./memory.hpp#L9)
 
-_`[network.hpp](./network.hpp)`_
+## [`network.hpp`](./network.hpp#L9)
 
 Information about part of a reply from Postgres, a message/packet, is returned by the `packet_header` function. The returned `header` structure can be used to fetch a new `std::vector` of byte values for the body which can then be decoded by a `decoder` instance. The [message formats are described in the Postgres documentation](https://www.postgresql.org/docs/current/static/protocol-message-formats.html).
 
@@ -34,5 +34,5 @@ A `decoder` takes a view of some memory so can be used with most memory allocati
 The `transfer` helper function allows a certain number of bytes to be fetched from the socket and placed in memory views, e.g. `raw_memory` view or a `std::vector<char>`.
 
 
-## [`recordset.hpp`](./recordset.hpp)
+## [`recordset.hpp`](./recordset.hpp#L9)
 
