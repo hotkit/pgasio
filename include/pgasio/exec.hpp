@@ -7,7 +7,7 @@
 
 
 #include <pgasio/connection.hpp>
-#include <pgasio/recordset.hpp>
+#include <pgasio/record_block.hpp>
 
 
 namespace pgasio {

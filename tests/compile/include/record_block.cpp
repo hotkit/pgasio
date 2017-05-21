@@ -3,5 +3,5 @@
 */
 
 
-#include <pgasio/recordset.hpp>
+#include <pgasio/record_block.hpp>
 
