@@ -5,7 +5,7 @@ To build these you will need the `f5-threading` library and a few Boost librarie
 
 ## csj
 
-This shows how to use the basic parts of the libraries to efficiently fetch data from Postgres, do some light processing and then output the data.
+This shows how to use the basic parts of the libraries to efficiently fetch data from Postgres, do some light processing and then output the data. It demonstrates how the _f5-threading_ library can be used to handle record data over multiple threads.
 
 The CSJ format is described at _[Comma Separated JSON](http://www.kirit.com/Comma%20Separated%20JSON)_.
 
