@@ -4,6 +4,7 @@
 
 
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 
 #include <pgasio/exec.hpp>
@@ -37,12 +38,24 @@ int main(int argc, char *argv[]) {
             std::cerr << "Unknown command line option: "s + argv[a][0] << std::endl;
             return 2;
         } else {
-            std::cerr << "Read file: " << argv[a] << std::endl;
+            std::ifstream file(argv[a]);
+            std::string content;
+            for ( char c{}; file.get(c); content += c );
+            sql.emplace_back(content);
         }
     }
 
-    // Do something stupid with these for now
-    std::cout << user << database << path;
+    boost::asio::io_service ios;
+    boost::asio::spawn(ios, [&](auto yield) {
+        auto cnx = pgasio::handshake(
+            pgasio::unix_domain_socket(ios, path, yield),
+            user, database, yield);
+
+        for ( const auto &commands : sql ) {
+            std::cout << commands.substr(0, 60) << "...." << std::endl;
+        }
+    });
+    ios.run();
 
     return 0;
 }
