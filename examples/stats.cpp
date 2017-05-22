@@ -41,6 +41,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    // Do something stupid with these for now
+    std::cout << user << database << path;
+
     return 0;
 }
 
