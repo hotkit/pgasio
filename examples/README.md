@@ -9,7 +9,7 @@ For all of these examples the following options set Postgres connection details:
 * `-d` -- Database name. Defaults to nothing, and the Postgres server defaults a missing database option to the user name.
 
 
-## [stats](./stats.cpp)
+## [stats](./stats.cpp#L6)
 
 This minimal example shows how to iterate over one or more statements that can produce multiple recordsets. Statistics about the executed SQL is returned.
 
@@ -19,7 +19,7 @@ Example:
 
     statis -c "SELECT 1, 2" pgbench.sql
 
-## [csj](./csj)
+## [csj](./csj.cpp#L6)
 
 This shows how to use the basic parts of the libraries to efficiently fetch data from Postgres, do some light processing and then output the data. It demonstrates how the _f5-threading_ library can be used to handle record data over multiple threads.
 
