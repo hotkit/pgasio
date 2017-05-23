@@ -17,7 +17,7 @@ The option `-c` specifies a command that is to be run (and it may be provided mu
 
 Example:
 
-    statis -c "SELECT 1, 2" pgbench.sql
+    stats -c "SELECT 1, 2" pgbench.sql
 
 ## [csj](./csj.cpp#L6)
 
