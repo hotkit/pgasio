@@ -47,12 +47,25 @@ int main(int argc, char *argv[]) {
 
     boost::asio::io_service ios;
     boost::asio::spawn(ios, [&](auto yield) {
-        auto cnx = pgasio::handshake(
-            pgasio::unix_domain_socket(ios, path, yield),
-            user, database, yield);
+        try {
+            auto cnx = pgasio::handshake(
+                pgasio::unix_domain_socket(ios, path, yield),
+                user, database, yield);
 
-        for ( const auto &commands : sql ) {
-            std::cout << commands.substr(0, 60) << "...." << std::endl;
+            for ( const auto &commands : sql ) {
+                auto results = pgasio::exec(cnx, commands, yield);
+                std::size_t rs_number{};
+                while ( auto rs = results.recordset(yield) ) {
+                    ++rs_number;
+                    while ( auto block = rs.next_block(yield) ) {
+                    }
+                    std::cout << commands << "\nRecordset:  " << rs_number << std::endl;
+                }
+            }
+        } catch ( pgasio::postgres_error &e ) {
+            std::cerr << "Postgres error: " << e.what() << std::endl;
+        } catch ( std::exception &e ) {
+            std::cerr << "std::exception: " << e.what() << std::endl;
         }
     });
     ios.run();

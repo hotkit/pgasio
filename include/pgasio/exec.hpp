@@ -32,6 +32,12 @@ namespace pgasio {
         std::vector<column_meta> cols;
         std::size_t next_row_data_size;
     public:
+        /// Return a sentinel recordset that shows the resultset is done
+        recordset(connection<S> &cnx, boost::asio::yield_context &)
+        : cnx(cnx) {
+        }
+
+        /// Return a rea; recordset that may contains data
         recordset(connection<S> &cnx, header c, boost::asio::yield_context &yield)
         : cnx(cnx),
             cols([&]() {
@@ -63,16 +69,24 @@ namespace pgasio {
                     return;
                 default:
                     throw std::runtime_error(
-                        std::string("Wasn't expecting this packet type: ") + header.type);
+                        std::string("Wasn't expecting this packet type: ") + header.type + '/' + std::to_string(header.type));
                 }
             }
             throw std::runtime_error("Connection closed before getting a recordset back");
         }
 
+        /// The column meta data for this recordset.
         array_view<const column_meta> columns() const {
             return cols;
         }
 
+        /// Returns true if the recordset is one that contains data, i.e. not
+        /// the sentinel value representing the end of the data.
+        operator bool () const {
+            return cols.size();
+        }
+
+        /// Returns the next data block
         pgasio::record_block next_block(boost::asio::yield_context &yield) {
             if ( next_row_data_size ) {
                 pgasio::record_block block{cols.size()};
@@ -89,15 +103,27 @@ namespace pgasio {
     template<typename S>
     class resultset {
         connection<S> &cnx;
-        header current;
     public:
-        resultset(connection<S> &cnx, header c)
-        : cnx(cnx), current(c) {
+        resultset(connection<S> &cnx)
+        : cnx(cnx) {
         }
 
         pgasio::recordset<S> recordset(boost::asio::yield_context &yield) {
-            assert(current.type == 'T');
-            return pgasio::recordset<S>{cnx, current, yield};
+            while ( cnx.socket.is_open() ) {
+                auto header = pgasio::packet_header(cnx.socket, yield);
+                switch ( header.type ) {
+                case 'T':
+                    return pgasio::recordset<S>{cnx, header, yield};
+                case 'Z':
+                    header.packet_body(cnx.socket, yield);
+                    return pgasio::recordset<S>(cnx, yield);
+                default:
+                    throw std::runtime_error(
+                        std::string("Fetching next recordset wasn't expecting this packet type: ")
+                        + header.type);
+                }
+            }
+            throw std::runtime_error("Connection closed before getting a recordset back");
         }
     };
 
@@ -108,16 +134,13 @@ namespace pgasio {
         command query('Q');
         query.c_str(sql);
         query.send(cnx.socket, yield);
-        while ( cnx.socket.is_open() ) {
-            auto header = pgasio::packet_header(cnx.socket, yield);
-            switch ( header.type ) {
-            case 'T':
-                return resultset<S>{cnx, header};
-            default:
-                throw std::runtime_error(std::string("Wasn't expecting this packet type: ") + header.type);
-            }
-        }
-        throw std::runtime_error("Connection closed before getting a recordset back");
+        return resultset<S>{cnx};
+    }
+    template<typename S>
+    inline resultset<S> exec(
+        connection<S> &cnx, const std::string &sql, boost::asio::yield_context &yield
+    ) {
+        return exec(cnx, sql.c_str(), yield);
     }
 
 

@@ -89,13 +89,7 @@ namespace pgasio {
                     bytes = next.body_size;
                 } else if ( next.type == 'C' ) {
                     next.packet_body(socket, yield);
-                    auto finish{packet_header(socket, yield)};
-                    if ( finish.type == 'Z' ) {
-                        finish.packet_body(socket, yield);
-                        return 0;
-                    } else {
-                        throw std::logic_error(std::string("Expected Z after C, but got: ") + finish.type);
-                    }
+                    return 0;
                 } else {
                     throw std::logic_error(std::string("Unknown packet type: ") + next.type);
                 }
