@@ -17,14 +17,14 @@ namespace pgasio {
 
     /// Store a block of data rows. The data buffer is non-aligned.
     class record_block {
-        std::size_t columns;
+        std::size_t m_columns;
         std::vector<byte_view> m_fields;
-        unaligned_slab buffer;
+        unaligned_slab m_buffer;
 
     public:
         /// An empty block shows that there are no more to come
         record_block()
-        : columns{} {
+        : m_columns{} {
         }
 
         /// The block is intiialised to hold a number of bytes of data row
@@ -33,9 +33,9 @@ namespace pgasio {
         explicit record_block(std::size_t column_count,
             std::size_t record_size = 512,  // Mean record size
             std::size_t bytes = 4u << 20) // MB of record data
-        : columns(column_count), buffer(bytes) {
+        : m_columns(column_count), m_buffer(bytes) {
             const auto expected_records = (bytes + record_size - 1) / record_size;
-            m_fields.reserve(columns * expected_records);
+            m_fields.reserve(m_columns * expected_records);
         }
 
         /// Not copyable
@@ -48,23 +48,23 @@ namespace pgasio {
         /// Allow conversion to a bool context. Returns true if the block
         /// contains data
         operator bool () const {
-            return columns > 0;
+            return m_columns > 0;
         }
 
         /// The number of bytes for row data still available in this block
         std::size_t remaining() const {
-            return buffer.remaining();
+            return m_buffer.remaining();
         }
         /// The number of bytes that have been used in the block
         std::size_t used_bytes() const {
-            return buffer.allocated();
+            return m_buffer.allocated();
         }
 
         /// Read the next data packet into the block
         template<typename S>
         void read_data_row(S &socket, std::size_t bytes, boost::asio::yield_context &yield) {
             assert(bytes <= remaining());
-            auto packet_data = buffer.allocate(bytes);
+            auto packet_data = m_buffer.allocate(bytes);
             transfer(socket, packet_data, bytes, yield);
             decoder packet(packet_data);
             packet.read_int16();
@@ -76,7 +76,7 @@ namespace pgasio {
                     m_fields.push_back(packet.read_bytes(bytes));
                 }
             }
-            assert(m_fields.size() % columns == 0);
+            assert(m_fields.size() % m_columns == 0);
         }
 
         /// Fill the block with data. Return zero if there is no more data to come
