@@ -18,7 +18,7 @@ namespace pgasio {
     /// Store a block of data rows. The data buffer is non-aligned.
     class record_block {
         std::size_t columns;
-        std::vector<byte_view> records;
+        std::vector<byte_view> m_fields;
         unaligned_slab buffer;
 
     public:
@@ -35,7 +35,7 @@ namespace pgasio {
             std::size_t bytes = 4u << 20) // MB of record data
         : columns(column_count), buffer(bytes) {
             const auto expected_records = (bytes + record_size - 1) / record_size;
-            records.reserve(columns * expected_records);
+            m_fields.reserve(columns * expected_records);
         }
 
         /// Not copyable
@@ -71,12 +71,12 @@ namespace pgasio {
             while ( packet.remaining() ) {
                 const auto bytes = packet.read_int32();
                 if ( bytes == -1 ) {
-                    records.push_back(byte_view());
+                    m_fields.push_back(byte_view());
                 } else {
-                    records.push_back(packet.read_bytes(bytes));
+                    m_fields.push_back(packet.read_bytes(bytes));
                 }
             }
-            assert(records.size() % columns == 0);
+            assert(m_fields.size() % columns == 0);
         }
 
         /// Fill the block with data. Return zero if there is no more data to come
@@ -99,7 +99,7 @@ namespace pgasio {
 
         /// Return the current record fields
         array_view<const byte_view> fields() const {
-            return records;
+            return m_fields;
         }
     };
 
