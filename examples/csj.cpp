@@ -53,6 +53,7 @@ std::string &json_string(std::string &str, pgasio::byte_view text) {
 
 
 int main(int argc, char *argv[]) {
+    std::ios::sync_with_stdio(false);
     std::cerr << "SELECT to CSJ" << std::endl;
 
     /// The parameters we need to use. This is all legacy C stuff :(
