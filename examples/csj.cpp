@@ -96,7 +96,6 @@ int main(int argc, char *argv[]) {
         return false;
     }};
     struct rblock {
-        std::size_t seq_number;
         pgasio::array_view<const pgasio::column_meta> columns;
         pgasio::record_block block;
     };
@@ -120,71 +119,68 @@ int main(int argc, char *argv[]) {
             *comma++ = escaped;
         }
         std::cout << std::endl;
-        std::size_t block_number{};
         while ( cnx.socket.is_open() ) {
             auto block = records.next_block(yield);
             const bool good = block;
-            blocks->produce({block_number++, records.columns(), std::move(block)}, yield);
+            blocks->produce({records.columns(), std::move(block)}, yield);
             if ( not good ) return;
         }
     });
 
     /// Workers for converting the raw data into CSJ
-    for ( std::size_t t{}; t < reactor.size(); ++t ) {
-        boost::asio::spawn(reactor.get_io_service(), [blocks, csj](auto yield) {
-            while ( true ) {
-                auto batch = blocks->consume(yield);
-                if ( batch.block ) {
-                    std::string text;
-                    text.reserve(batch.block.used_bytes());
-                    for ( auto cols = batch.block.fields(); cols.size(); cols = cols.slice(batch.columns.size()) ) {
-                        for ( std::size_t index{}; index < batch.columns.size(); ++index ) {
-                            if ( index ) text += ',';
-                           if ( cols[index].data() == nullptr ) {
-                               text += "null";
-                           } else {
-                                switch ( batch.columns[index].field_type_oid ) {
-                                case 16: // bool
-                                    text += cols[index][0] == 't' ? "true" : "false";
-                                    break;
-                                case 21: // int2
-                                case 23: // int4
-                                case 20: // int8
-                                case 26: // oid
-                                case 700: // float4
-                                case 701: // float8
-                                    safe_data(text, cols[index]);
-                                    break;
-                                case 114: // json
-                                case 1700: // numeric
-                                case 1082: // date
-                                case 1083: // time
-                                case 1114: // timestamp without time zone
-                                case 1184: // timestamp with time zone
-                                case 2950: // uuid
-                                case 3802: // jsonb
-                                    safe_string(text, cols[index]);
-                                    break;
-                                default:
-                                    text += "**** " +
-                                        std::to_string(batch.columns[index].field_type_oid) +" **** ";
-                                case 25: // text
-                                case 1042: // bpchar
-                                case 1043: // varchar
-                                    json_string(text, cols[index]);
-                                }
-                           }
+    boost::asio::spawn(reactor.get_io_service(), [blocks, csj](auto yield) {
+        while ( true ) {
+            auto batch = blocks->consume(yield);
+            if ( batch.block ) {
+                std::string text;
+                text.reserve(batch.block.used_bytes());
+                for ( auto cols = batch.block.fields(); cols.size(); cols = cols.slice(batch.columns.size()) ) {
+                    for ( std::size_t index{}; index < batch.columns.size(); ++index ) {
+                        if ( index ) text += ',';
+                        if ( cols[index].data() == nullptr ) {
+                            text += "null";
+                        } else {
+                            switch ( batch.columns[index].field_type_oid ) {
+                            case 16: // bool
+                                text += cols[index][0] == 't' ? "true" : "false";
+                                break;
+                            case 21: // int2
+                            case 23: // int4
+                            case 20: // int8
+                            case 26: // oid
+                            case 700: // float4
+                            case 701: // float8
+                                safe_data(text, cols[index]);
+                                break;
+                            case 114: // json
+                            case 1700: // numeric
+                            case 1082: // date
+                            case 1083: // time
+                            case 1114: // timestamp without time zone
+                            case 1184: // timestamp with time zone
+                            case 2950: // uuid
+                            case 3802: // jsonb
+                                safe_string(text, cols[index]);
+                                break;
+                            default:
+                                text += "**** " +
+                                    std::to_string(batch.columns[index].field_type_oid) +" **** ";
+                            case 25: // text
+                            case 1042: // bpchar
+                            case 1043: // varchar
+                                json_string(text, cols[index]);
+                            }
                         }
-                        text += '\n';
                     }
-                    csj->produce(text, yield);
-                } else {
-                    csj->produce(std::string(), yield);
-                    return;
+                    text += '\n';
                 }
+                csj->produce(text, yield);
+            } else {
+                csj->produce(std::string(), yield);
+                return;
             }
-        });
-    }
+        }
+    });
 
     /// Write the CSJ blocks out to stdout in the right order
     f5::sync s;
