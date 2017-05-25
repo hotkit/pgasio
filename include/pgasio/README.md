@@ -11,14 +11,25 @@ For simple interactions with Postgres the general process is:
 It's important that the resultant data is properly iterated though because the network traffic must be fully read.
 
 
+## [`buffered.hpp`](./buffered.hpp#L9)
+
+A wrapper for a socket type which adds a read buffer. The read buffering is especially useful for fetching data where there are many small rows as it reduces the number of system calls needed.
+
+Use `make_buffered` to return a `buffered_socket` instance that can be used in the rest of the APIs as a drop in replacement for a normal Boost ASIO socket.
+
+
 ## [`connection.hpp`](./connection.hpp#L9)
 
 A connection to a Postgres server can be created by calling `handshake` having already opened a suitable socket for it to use. This will return a `connection` object which will contain information provided by the server duing the connection set up.
 
 There is also a helper function, `unix_domain_socket`, which can be used to create a suitable unix domain socket to pass to `handshake`:
 
+    #include <pgasio/buffered.hpp>
+    #include <pgasio/connection.hpp>
+
     auto cnx = pgasio::handshake(
-        pgasio::unix_domain_socket(ioservice, "/path/to/socket", yield),
+        pgasio::make_buffered(
+            pgasio::unix_domain_socket(ioservice, "/path/to/socket", yield)),
         "myusername", "somedb", yield);
 
 

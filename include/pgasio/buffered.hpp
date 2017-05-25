@@ -77,6 +77,7 @@ namespace pgasio {
     }
 
 
+    /// Overload for the transfer function that uses the buffered socket.
     template<typename S, typename B> inline
     void transfer(
         buffered_socket<S> &source, B &buffer, std::size_t bytes, boost::asio::yield_context &yield
