@@ -70,6 +70,7 @@ The `transfer` helper function allows a certain number of bytes to be fetched fr
 
 For an example of how these can be used together see the `handshake` implementation in [`connection.hpp`](./connection.hpp#L21).
 
+
 ## [`record_block.hpp`](./record_block.hpp#L9)
 
 Contains a block of record data fetched from a socket. It owns a large slab of memory (an `unaligned_slab`) together with a vector of field data locations so the column data can be interpreted correctly.
