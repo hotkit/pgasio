@@ -12,6 +12,7 @@
 #include <f5/threading/reactor.hpp>
 #include <f5/threading/sync.hpp>
 
+#include <pgasio/buffered.hpp>
 #include <pgasio/exec.hpp>
 
 
@@ -106,7 +107,7 @@ int main(int argc, char *argv[]) {
     /// Database conversation coroutine
     boost::asio::spawn(reactor.get_io_service(), [=, &reactor](auto yield) {
         auto cnx = pgasio::handshake(
-            pgasio::unix_domain_socket(reactor.get_io_service(), path, yield),
+            pgasio::make_buffered(pgasio::unix_domain_socket(reactor.get_io_service(), path, yield)),
             user, database, yield);
         auto results = pgasio::exec(cnx, sql, yield);
         auto records = results.recordset(yield);

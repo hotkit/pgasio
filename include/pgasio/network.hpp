@@ -9,6 +9,7 @@
 #include <pgasio/errors.hpp>
 #include <pgasio/memory.hpp>
 
+#include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/read.hpp>
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/streambuf.hpp>
@@ -22,7 +23,10 @@ namespace pgasio {
 
     /// Transfer some number of bytes from the socket into the buffer
     template<typename S, typename B> inline
-    void transfer(S &socket, B &buffer, std::size_t bytes, boost::asio::yield_context &yield) {
+    void transfer(
+        boost::asio::basic_stream_socket<S> &socket,
+        B &buffer, std::size_t bytes, boost::asio::yield_context &yield
+    ) {
         boost::asio::async_read(socket, boost::asio::buffer(buffer.data(), buffer.size()),
             boost::asio::transfer_exactly(bytes), yield);
     };
