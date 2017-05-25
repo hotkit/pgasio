@@ -47,7 +47,14 @@ namespace pgasio {
                 process_id = decode.read_int32();
                 secret = decode.read_int32();
                 break;
-            case 'R':
+            case 'R': {
+                    auto subcode = decode.read_int32();
+                    if ( subcode != 0 ) {
+                        throw std::runtime_error(
+                            "Don't know how to handle authentication sub-code " +
+                                std::to_string(subcode));
+                    }
+                }
                 break; // Do nothing, the authentication was succesful
             case 'S': {
                     auto name = decode.read_string();
