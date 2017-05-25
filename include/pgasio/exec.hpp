@@ -31,10 +31,11 @@ namespace pgasio {
         connection<S> &cnx;
         std::vector<column_meta> cols;
         std::size_t next_row_data_size;
+        bool sentinel;
     public:
         /// Return a sentinel recordset that shows the resultset is done
         recordset(connection<S> &cnx, boost::asio::yield_context &)
-        : cnx(cnx) {
+        : cnx(cnx), next_row_data_size{}, sentinel{true} {
         }
 
         /// Return a rea; recordset that may contains data
@@ -44,35 +45,51 @@ namespace pgasio {
                 std::vector<column_meta> columns;
                 auto packet = c.packet_body(cnx.socket, yield);
                 decoder description(packet);
-                const std::size_t count = description.read_int16();
-                columns.reserve(count);
-                while ( columns.size() != count ) {
-                    column_meta col;
-                    col.name = description.read_string();
-                    col.table_oid = description.read_int32();
-                    col.table_column = description.read_int16();
-                    col.field_type_oid = description.read_int32();
-                    col.data_size = description.read_int16();
-                    col.type_modifier = description.read_int32();
-                    col.format_code = description.read_int16();
-                    columns.push_back(col);
+                if ( c.type == 'T' ) {
+                    const std::size_t count = description.read_int16();
+                    columns.reserve(count);
+                    while ( columns.size() != count ) {
+                        column_meta col;
+                        col.name = description.read_string();
+                        col.table_oid = description.read_int32();
+                        col.table_column = description.read_int16();
+                        col.field_type_oid = description.read_int32();
+                        col.data_size = description.read_int16();
+                        col.type_modifier = description.read_int32();
+                        col.format_code = description.read_int16();
+                        columns.push_back(col);
+                    }
                 }
                 return columns;
             }()),
-            next_row_data_size{}
+            next_row_data_size{},
+            sentinel{false}
         {
-            while ( cnx.socket.is_open() ) {
+            /// We can get recordsets that are completely empty. In this
+            // /case we'll get an `I` packet type, _EmptyQueryResponse_
+            /// and there won't be field infromation or anything else. This
+            /// happens, for example, when an empty SQL statement is presented
+            /// to the database.
+            while ( c.type == 'T' && cnx.socket.is_open() ) {
                 auto header = pgasio::packet_header(cnx.socket, yield);
                 switch ( header.type ) {
+                case 'C':
+                    header.packet_body(cnx.socket, yield);
+                    next_row_data_size = 0u;
+                    return;
                 case 'D':
                     next_row_data_size = header.body_size;
                     return;
                 default:
-                    throw std::runtime_error(
-                        std::string("Wasn't expecting this packet type: ") + header.type + '/' + std::to_string(header.type));
+                    throw std::runtime_error("Wasn't expecting this packet type: "
+                        + std::to_string(int(header.type)) + '/' + header.type);
                 }
             }
-            throw std::runtime_error("Connection closed before getting a recordset back");
+            if ( c.type == 'I' ) {
+                next_row_data_size = 0u;
+            } else {
+                throw std::runtime_error("Connection closed before getting a recordset back");
+            }
         }
 
         /// The column meta data for this recordset.
@@ -83,7 +100,7 @@ namespace pgasio {
         /// Returns true if the recordset is one that contains data, i.e. not
         /// the sentinel value representing the end of the data.
         operator bool () const {
-            return cols.size();
+            return not sentinel;
         }
 
         /// Returns the next data block
@@ -112,6 +129,7 @@ namespace pgasio {
             while ( cnx.socket.is_open() ) {
                 auto header = pgasio::packet_header(cnx.socket, yield);
                 switch ( header.type ) {
+                case 'I':
                 case 'T':
                     return pgasio::recordset<S>{cnx, header, yield};
                 case 'Z':
@@ -119,8 +137,8 @@ namespace pgasio {
                     return pgasio::recordset<S>(cnx, yield);
                 default:
                     throw std::runtime_error(
-                        std::string("Fetching next recordset wasn't expecting this packet type: ")
-                        + header.type);
+                        "Fetching next recordset wasn't expecting this packet type: "
+                            + std::to_string(header.type)+ "/" + header.type);
                 }
             }
             throw std::runtime_error("Connection closed before getting a recordset back");
