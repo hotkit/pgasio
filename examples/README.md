@@ -1,6 +1,6 @@
 # Examples
 
-To build these you will need the `f5-threading` library and a few Boost libraries. The `[.travis.yml](./../.travis.yml)` file contains hints on how to get them and to do a build using [Boost build](http://www.boost.org/build/).
+To build these you will need the `f5-threading` library and a few Boost libraries. The [`.travis.yml`](./../.travis.yml) file contains hints on how to get them and to do a build using [Boost build](http://www.boost.org/build/).
 
 For all of these examples the following options set Postgres connection details:
 
