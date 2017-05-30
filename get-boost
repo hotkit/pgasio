@@ -2,7 +2,9 @@
 set -ex
 cd $(dirname $0)
 
-wget -O boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download
+which wget \
+	&& wget -O boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download \
+	|| curl -L -o boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download
 tar xf boost.tar.bz2
 cd boost_1_62_0/
 ./bootstrap.sh

@@ -9,6 +9,7 @@
 #include <pgasio/memory.hpp>
 
 #include <exception>
+#include <string>
 #include <unordered_map>
 
 
