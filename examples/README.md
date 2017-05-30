@@ -19,7 +19,7 @@ Example:
 
     stats -c "SELECT 1, 2" pgbench.sql
 
-## [csj](./csj.cpp#L6)
+## [csj](./f5/csj.cpp#L6)
 
 This shows how to use the basic parts of the libraries to efficiently fetch data from Postgres, do some light processing and then output the data. It demonstrates how the _f5-threading_ library can be used to handle record data over multiple threads.
 
