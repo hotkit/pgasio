@@ -1,4 +1,3 @@
-include $(TOP)/../fost-base/fost.jam ;
 import path ;
 import utility ;
 
