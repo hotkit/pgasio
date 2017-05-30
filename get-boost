@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+cd $(dirname $0)
+
+wget -O boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.62.0/boost_1_62_0.tar.bz2/download
+tar xf boost.tar.bz2
+cd boost_1_62_0/
+./bootstrap.sh
+./bjam toolset=gcc release link=shared install cxxflags=-std=c++14 --prefix=../boost --with-coroutine --with-system
