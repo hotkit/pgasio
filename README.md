@@ -13,6 +13,15 @@ Pgasio is designed for high performance connectivity to Postgres. It does only a
 Look at the [examples](./examples/) to see how it can be used, or read through the [header documentation](./include/pgasio/).
 
 
+## Using pgasio
+
+This is a header only library, so all you need to do is to clone the repository and then include the `include` folder on your include path :) If you're already using Boost then that's all you need.
+
+The only (non-header) Boost libraries used are Coroutine and System -- these must be linked in to any executables you build.
+
+The examples also make use of the `f5-threading` library (currently the experimental `feature/channel` branch). If you want to compile these you'll also need the include files from `f5-threading` on your include path, as well as the Boost libraries.
+
+
 ## Roadmap
 
 * Version 1 -- C++14. (Current development)
