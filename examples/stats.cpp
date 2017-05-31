@@ -21,39 +21,26 @@ struct col_stats {
 
     void operator () (pgasio::byte_view);
 };
-
-
 /// Store statistics about a single recordset we get back
 struct stats {
-    std::chrono::time_point<std::chrono::steady_clock> started
-        = std::chrono::steady_clock::now();
-    std::chrono::time_point<std::chrono::steady_clock> ended{};
+    std::chrono::time_point<std::chrono::steady_clock> started, ended;
     std::size_t blocks = 0;
     std::size_t rows = 0;
-
     std::vector<col_stats> cols;
 
-    void operator += (const stats &s) {
-        blocks += s.blocks;
-        rows += s.rows;
-    }
-
-    void done() {
-        ended = std::chrono::steady_clock::now();
-    }
+    stats();
+    void operator += (const stats &s);
+    void done();
 };
 template<class Ch, class Tr, class... Args>
 auto operator << (std::basic_ostream<Ch, Tr> &os, const stats &s)
     -> std::basic_ostream<Ch, Tr>&;
-
-
 /// Store the statistics about the commands (potentially multiple recordsets)
 struct cmd_stats : public stats {
     std::string command;
     std::vector<stats> recordsets;
-    cmd_stats(std::string cmd)
-    : command(std::move(cmd)) {
-    }
+
+    cmd_stats(std::string cmd);
 };
 template<class Ch, class Tr, class... Args>
 auto operator << (std::basic_ostream<Ch, Tr> &, const cmd_stats &)
@@ -105,13 +92,13 @@ int main(int argc, char *argv[]) {
     /// The io_service acts as a container within which coroutines run.
     boost::asio::io_service ios;
     /// For each command spawn a coroutine to execute it
-    boost::asio::spawn(ios, [&](auto yield) {
-        try {
-            auto cnx = pgasio::handshake(
-                pgasio::make_buffered(pgasio::unix_domain_socket(ios, path, yield)),
-                user, database, yield);
+    for ( const auto &commands : sql ) {
+        boost::asio::spawn(ios, [&, commands](auto yield) {
+            try {
+                auto cnx = pgasio::handshake(
+                    pgasio::make_buffered(pgasio::unix_domain_socket(ios, path, yield)),
+                    user, database, yield);
 
-            for ( const auto &commands : sql ) {
                 cmd_stats cmd_stat{commands};
                 auto results = pgasio::query(cnx, commands, yield);
                 while ( auto rs = results.recordset(yield) ) {
@@ -137,16 +124,21 @@ int main(int argc, char *argv[]) {
                 cmd_stat.done();
                 overall += cmd_stat;
                 individual.emplace_back(std::move(cmd_stat));
+            } catch ( pgasio::postgres_error &e ) {
+                std::cerr << "Postgres error: " << e.what() << std::endl;
+                std::exit(1);
+            } catch ( std::exception &e ) {
+                std::cerr << "std::exception: " << e.what() << std::endl;
+                std::exit(2);
             }
-        } catch ( pgasio::postgres_error &e ) {
-            std::cerr << "Postgres error: " << e.what() << std::endl;
-            std::exit(1);
-        } catch ( std::exception &e ) {
-            std::cerr << "std::exception: " << e.what() << std::endl;
-            std::exit(2);
-        }
-    });
+        });
+    }
+    /// Execute the coroutines until they all finish.
+    ///
+    /// Because there is only a single thread (the main one) we don't
+    /// need to do any synchronisation.
     ios.run();
+    /// Record the final statistics and then display everything
     overall.done();
     for ( const auto &stat : individual ) {
         std::cout << stat << std::endl;
@@ -165,6 +157,23 @@ void col_stats::operator () (pgasio::byte_view field) {
         ++not_nulls;
         size += field.size();
     }
+}
+
+
+stats::stats()
+: started{std::chrono::steady_clock::now()}, ended{} {
+}
+void stats::operator += (const stats &s) {
+    blocks += s.blocks;
+    rows += s.rows;
+}
+void stats::done() {
+    ended = std::chrono::steady_clock::now();
+}
+
+
+cmd_stats::cmd_stats(std::string cmd)
+: command(std::move(cmd)) {
 }
 
 
