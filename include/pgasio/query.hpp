@@ -148,17 +148,17 @@ namespace pgasio {
 
     /// Execute an SQL command and return the results
     template<typename S>
-    inline resultset<S> exec(connection<S> &cnx, const char *sql, boost::asio::yield_context &yield) {
+    inline resultset<S> query(connection<S> &cnx, const char *sql, boost::asio::yield_context &yield) {
         command query('Q');
         query.c_str(sql);
         query.send(cnx.socket, yield);
         return resultset<S>{cnx};
     }
     template<typename S>
-    inline resultset<S> exec(
+    inline resultset<S> query(
         connection<S> &cnx, const std::string &sql, boost::asio::yield_context &yield
     ) {
-        return exec(cnx, sql.c_str(), yield);
+        return query(cnx, sql.c_str(), yield);
     }
 
 

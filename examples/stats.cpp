@@ -121,7 +121,7 @@ int main(int argc, char *argv[]) {
             for ( const auto &commands : sql ) {
                 std::cout << commands << std::endl;
                 stats cmd_stat;
-                auto results = pgasio::exec(cnx, commands, yield);
+                auto results = pgasio::query(cnx, commands, yield);
                 std::size_t rs_number{};
                 while ( auto rs = results.recordset(yield) ) {
                     ++rs_number;

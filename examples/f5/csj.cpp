@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
         auto cnx = pgasio::handshake(
             pgasio::make_buffered(pgasio::unix_domain_socket(reactor.get_io_service(), path, yield)),
             user, database, yield);
-        auto results = pgasio::exec(cnx, sql, yield);
+        auto results = pgasio::query(cnx, sql, yield);
         auto records = results.recordset(yield);
         auto comma = std::experimental::make_ostream_joiner(std::cout, ",");
         for ( const auto &col : records.columns() ) {
