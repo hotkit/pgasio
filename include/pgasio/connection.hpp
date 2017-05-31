@@ -26,7 +26,7 @@ namespace pgasio {
         const char *user, const char *database,
         boost::asio::yield_context &yield
     ) {
-        command cmd{0}; // The initial connect doesn't use a packet type char
+        command cmd{0}; // The initial connect doesn't use a message type char
         cmd.int32(0x0003'0000);
         cmd.c_str("user");
         cmd.c_str(user);
@@ -39,8 +39,8 @@ namespace pgasio {
         std::unordered_map<std::string, std::string> settings;
         int32_t process_id{}, secret{};
         while ( socket.is_open() ) {
-            auto header = packet_header(socket, yield);
-            auto body = header.packet_body(socket, yield);
+            auto header = message_header(socket, yield);
+            auto body = header.message_body(socket, yield);
             decoder decode = byte_view(body);
             switch ( header.type ) {
             case 'K':
@@ -66,7 +66,7 @@ namespace pgasio {
                 return connection<S>(std::move(socket), std::move(settings), process_id, secret);
             default:
                 throw std::runtime_error(
-                    std::string("Unknown connection packet type: ") + header.type);
+                    std::string("Unknown connection message type: ") + header.type);
             }
         }
         throw std::runtime_error("The Postgres connection closed during the initial handshake");

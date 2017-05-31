@@ -6,7 +6,7 @@ For simple interactions with Postgres the general process is:
 
 1. Create a connection --  [`connection.hpp`](./connection.hpp#L9)
 2. Issue a command to Postgres -- [`query.hpp`](./query.hpp#L9), or [`network.hpp`](./network.hpp#L9) then possibly [`record_block.hpp`](./record_block.hpp#L9).
-3. Iterate through the messages Postgres returns until a `Z` packet is returned -- you can then return to step 2 if you need to.
+3. Iterate through the messages Postgres returns until a `Z` message is returned -- you can then return to step 2 if you need to.
 
 It's important that the resultant data is properly iterated though because the network traffic must be fully read.
 
@@ -37,8 +37,8 @@ There is also a helper function, `unix_domain_socket`, which can be used to crea
 
 Contains classes that can be used as either error returns or exceptions.
 
-* `postgres_error` -- This is thrown by `packet_header` when Postgres returns an error to the client.
-* `end_of_packet` -- Thrown by the `decoder` when there aren't enough bytes left in the message.
+* `postgres_error` -- This is thrown by `message_header` when Postgres returns an error to the client.
+* `end_of_message` -- Thrown by the `decoder` when there aren't enough bytes left in the message.
 
 
 ## [`memory.hpp`](./memory.hpp#L9)
@@ -50,7 +50,7 @@ Contains an `array_view` implementation that can be used to share and manipulate
 
 ## [`network.hpp`](./network.hpp#L9)
 
-Information about part of a reply from Postgres, a message/packet, is returned by the `packet_header` function. The returned `header` structure can be used to fetch a new `std::vector` of byte values for the body which can then be decoded by a `decoder` instance. The [message formats are described in the Postgres documentation](https://www.postgresql.org/docs/current/static/protocol-message-formats.html).
+Information about part of a reply from Postgres, a message, is returned by the `message_header` function. The returned `header` structure can be used to fetch a new `std::vector` of byte values for the body which can then be decoded by a `decoder` instance. The [message formats are described in the Postgres documentation](https://www.postgresql.org/docs/current/static/protocol-message-formats.html).
 
 A `decoder` takes a view of some memory so can be used with most memory allocation strategies:
 

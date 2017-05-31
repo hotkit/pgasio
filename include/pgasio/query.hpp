@@ -43,8 +43,8 @@ namespace pgasio {
         : cnx(cnx),
             cols([&]() {
                 std::vector<column_meta> columns;
-                auto packet = c.packet_body(cnx.socket, yield);
-                decoder description(packet);
+                auto body = c.message_body(cnx.socket, yield);
+                decoder description(body);
                 if ( c.type == 'T' ) {
                     const std::size_t count = description.read_int16();
                     columns.reserve(count);
@@ -66,22 +66,22 @@ namespace pgasio {
             sentinel{false}
         {
             /// We can get recordsets that are completely empty. In this
-            // /case we'll get an `I` packet type, _EmptyQueryResponse_
+            // /case we'll get an `I` message type, _EmptyQueryResponse_
             /// and there won't be field infromation or anything else. This
             /// happens, for example, when an empty SQL statement is presented
             /// to the database.
             while ( c.type == 'T' && cnx.socket.is_open() ) {
-                auto header = pgasio::packet_header(cnx.socket, yield);
+                auto header = message_header(cnx.socket, yield);
                 switch ( header.type ) {
                 case 'C':
-                    header.packet_body(cnx.socket, yield);
+                    header.message_body(cnx.socket, yield);
                     next_row_data_size = 0u;
                     return;
                 case 'D':
                     next_row_data_size = header.body_size;
                     return;
                 default:
-                    throw std::runtime_error("Wasn't expecting this packet type: "
+                    throw std::runtime_error("Wasn't expecting this message type: "
                         + std::to_string(int(header.type)) + '/' + header.type);
                 }
             }
@@ -127,17 +127,17 @@ namespace pgasio {
 
         pgasio::recordset<S> recordset(boost::asio::yield_context &yield) {
             while ( cnx.socket.is_open() ) {
-                auto header = pgasio::packet_header(cnx.socket, yield);
+                auto header = message_header(cnx.socket, yield);
                 switch ( header.type ) {
                 case 'I':
                 case 'T':
                     return pgasio::recordset<S>{cnx, header, yield};
                 case 'Z':
-                    header.packet_body(cnx.socket, yield);
+                    header.message_body(cnx.socket, yield);
                     return pgasio::recordset<S>(cnx, yield);
                 default:
                     throw std::runtime_error(
-                        "Fetching next recordset wasn't expecting this packet type: "
+                        "Fetching next recordset wasn't expecting this message type: "
                             + std::to_string(header.type)+ "/" + header.type);
                 }
             }

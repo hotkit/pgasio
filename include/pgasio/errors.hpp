@@ -34,11 +34,11 @@ namespace pgasio {
     };
 
 
-    /// Thrown when we try to read too many bytes out of a network packet
-    class end_of_packet : public std::logic_error {
+    /// Thrown when we try to read too many bytes out of a network message
+    class end_of_message : public std::logic_error {
     public:
-        end_of_packet()
-        : logic_error("Ran out of bytes in network packet") {
+        end_of_message()
+        : logic_error("Ran out of bytes in network message") {
         }
     };
 

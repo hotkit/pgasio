@@ -52,7 +52,7 @@ namespace pgasio {
         }
 
         unsigned char read_byte() {
-            if ( not remaining() ) throw end_of_packet();
+            if ( not remaining() ) throw end_of_message();
             const auto byte = buffer[0];
             buffer = buffer.slice(1);
             return byte;
@@ -67,7 +67,7 @@ namespace pgasio {
         }
 
         byte_view read_bytes(std::size_t bytes) {
-            if ( remaining() < bytes ) throw end_of_packet();
+            if ( remaining() < bytes ) throw end_of_message();
             auto ret = buffer.slice(0, bytes);
             buffer = buffer.slice(bytes);
             return ret;
@@ -85,8 +85,8 @@ namespace pgasio {
     };
 
 
-    /// An inbound packet header. The packet body must be read. For data row
-    /// packets this would normally be done through the
+    /// An inbound message header. The message body must be read. For data row
+    /// message this would normally be done through the `record_block` class.
     struct header {
         const char type;
         const std::size_t total_size;
@@ -100,7 +100,7 @@ namespace pgasio {
         }
 
         template<typename S> inline
-        std::vector<unsigned char> packet_body(S &socket, boost::asio::yield_context &yield) {
+        std::vector<unsigned char> message_body(S &socket, boost::asio::yield_context &yield) {
             std::vector<unsigned char> body(body_size);
             transfer(socket, body, body_size, yield);
             return body;
@@ -108,22 +108,22 @@ namespace pgasio {
     };
 
 
-    /// Read a packet header, but not the packet body. If the packet is an
+    /// Read a message header, but not the message body. If the message is an
     /// error message then turn it into an exception.
     template<typename S> inline
-    auto packet_header(S &socket, boost::asio::yield_context &yield) {
+    auto message_header(S &socket, boost::asio::yield_context &yield) {
         std::array<unsigned char, 5> buffer;
         transfer(socket, buffer, buffer.size(), yield);
         uint32_t bytes = (buffer[1] << 24) +
             (buffer[2] << 16) + (buffer[3] << 8) + buffer[4];
         header head{char(buffer[0]), bytes};
         if ( head.type == 'E' ) {
-            const auto body = head.packet_body(socket, yield);
-            decoder packet{byte_view{body}};
+            const auto body = head.message_body(socket, yield);
+            decoder msg{byte_view{body}};
             postgres_error::messages_type messages;
-            while ( packet.remaining() > 1 ) {
-                const auto type = packet.read_byte();
-                messages[type] = packet.read_string();
+            while ( msg.remaining() > 1 ) {
+                const auto type = msg.read_byte();
+                messages[type] = msg.read_string();
             }
             throw postgres_error(std::move(messages));
         } else {
@@ -132,12 +132,12 @@ namespace pgasio {
     }
 
 
-    /// Helper to assemble a command packet to be sent to Postgres
+    /// Helper to assemble a command message to be sent to Postgres
     class command {
         char instruction;
         boost::asio::streambuf body;
     public:
-        /// Construct a command. The very first packet sent after connecting
+        /// Construct a command. The very first message sent after connecting
         /// doesn't have an instruction value. Send zero for this case. The
         /// `handshake` function will handle this for you.
         command(char type)

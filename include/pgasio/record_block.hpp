@@ -28,7 +28,7 @@ namespace pgasio {
         }
 
         /// The block is intiialised to hold a number of bytes of data row
-        /// network packets and indexes the columns into those through
+        /// network messages and indexes the columns into those through
         /// the records member;
         explicit record_block(std::size_t column_count,
             std::size_t record_size = 512,  // Mean record size
@@ -60,20 +60,20 @@ namespace pgasio {
             return m_buffer.allocated();
         }
 
-        /// Read the next data packet into the block
+        /// Read the next data message into the block
         template<typename S>
         void read_data_row(S &socket, std::size_t bytes, boost::asio::yield_context &yield) {
             assert(bytes <= remaining());
-            auto packet_data = m_buffer.allocate(bytes);
-            transfer(socket, packet_data, bytes, yield);
-            decoder packet(packet_data);
-            packet.read_int16();
-            while ( packet.remaining() ) {
-                const auto bytes = packet.read_int32();
+            auto message_data = m_buffer.allocate(bytes);
+            transfer(socket, message_data, bytes, yield);
+            decoder message(message_data);
+            message.read_int16();
+            while ( message.remaining() ) {
+                const auto bytes = message.read_int32();
                 if ( bytes == -1 ) {
                     m_fields.push_back(byte_view());
                 } else {
-                    m_fields.push_back(packet.read_bytes(bytes));
+                    m_fields.push_back(message.read_bytes(bytes));
                 }
             }
             assert(m_fields.size() % m_columns == 0);
@@ -84,14 +84,14 @@ namespace pgasio {
         std::size_t read_rows(S &socket, std::size_t bytes, boost::asio::yield_context &yield) {
             do {
                 read_data_row(socket, bytes, yield);
-                auto next = packet_header(socket, yield);
+                auto next = message_header(socket, yield);
                 if ( next.type == 'D' ) {
                     bytes = next.body_size;
                 } else if ( next.type == 'C' ) {
-                    next.packet_body(socket, yield);
+                    next.message_body(socket, yield);
                     return 0;
                 } else {
-                    throw std::logic_error(std::string("Unknown packet type: ") + next.type);
+                    throw std::logic_error(std::string("Unknown message type: ") + next.type);
                 }
             } while ( bytes <= remaining() );
             return bytes;
