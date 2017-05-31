@@ -3,5 +3,5 @@
 */
 
 
-#include <pgasio/exec.hpp>
+#include <pgasio/query.hpp>
 

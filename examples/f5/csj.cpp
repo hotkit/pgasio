@@ -13,7 +13,7 @@
 #include <f5/threading/sync.hpp>
 
 #include <pgasio/buffered.hpp>
-#include <pgasio/exec.hpp>
+#include <pgasio/query.hpp>
 
 
 /// Append safe data (numeric so nothing to do)

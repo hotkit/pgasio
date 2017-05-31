@@ -9,7 +9,7 @@
 #include <iostream>
 
 #include <pgasio/buffered.hpp>
-#include <pgasio/exec.hpp>
+#include <pgasio/query.hpp>
 
 
 struct col_stats {
