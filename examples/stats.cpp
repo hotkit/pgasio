@@ -12,34 +12,18 @@
 #include <pgasio/query.hpp>
 
 
+/// Store statistics about the column data
 struct col_stats {
     pgasio::column_meta meta;
 
     std::size_t nulls{}, not_nulls{};
     std::size_t size{};
 
-    void operator () (pgasio::byte_view field) {
-        if ( field.data() == nullptr ) {
-            ++nulls;
-        } else {
-            ++not_nulls;
-            size += field.size();
-        }
-    }
+    void operator () (pgasio::byte_view);
 };
-template<class Ch, class Tr, class... Args>
-auto operator << (std::basic_ostream<Ch, Tr>& os, const col_stats &s)
-    -> std::basic_ostream<Ch, Tr>&
-{
-    const auto rows = s.nulls + s.not_nulls;
-    os << "  " << s.meta.name << ": oid=" << s.meta.field_type_oid
-        << "\n    null: " << s.nulls << '/' << rows << " not null: " << s.not_nulls
-        << "\n    size: total=" << s.size;
-    if ( rows ) os << " mean=" << (double(s.size)/rows);
-    return os;
-}
 
 
+/// Store statistics about a single recordset we get back
 struct stats {
     std::chrono::time_point<std::chrono::steady_clock> started
         = std::chrono::steady_clock::now();
@@ -49,10 +33,9 @@ struct stats {
 
     std::vector<col_stats> cols;
 
-    stats &operator += (const stats &s) {
+    void operator += (const stats &s) {
         blocks += s.blocks;
         rows += s.rows;
-        return *this;
     }
 
     void done() {
@@ -60,15 +43,21 @@ struct stats {
     }
 };
 template<class Ch, class Tr, class... Args>
-auto operator << (std::basic_ostream<Ch, Tr>& os, const stats &s)
-    -> std::basic_ostream<Ch, Tr>&
-{
-    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(s.ended - s.started);
-    os << "Time: " <<time.count() << "ms\nRows: " << s.rows
-        << " (blocks= " << s.rows << ')';
-    for ( auto &&cs : s.cols ) os << '\n' << cs;
-    return os;
-}
+auto operator << (std::basic_ostream<Ch, Tr> &os, const stats &s)
+    -> std::basic_ostream<Ch, Tr>&;
+
+
+/// Store the statistics about the commands (potentially multiple recordsets)
+struct cmd_stats : public stats {
+    std::string command;
+    std::vector<stats> recordsets;
+    cmd_stats(std::string cmd)
+    : command(std::move(cmd)) {
+    }
+};
+template<class Ch, class Tr, class... Args>
+auto operator << (std::basic_ostream<Ch, Tr> &, const cmd_stats &)
+    -> std::basic_ostream<Ch, Tr>&;
 
 
 int main(int argc, char *argv[]) {
@@ -110,21 +99,22 @@ int main(int argc, char *argv[]) {
         }
     }
 
+    /// The statistics we want to capture and display
+    stats overall;
+    std::vector<cmd_stats> individual;
+    /// The io_service acts as a container within which coroutines run.
     boost::asio::io_service ios;
+    /// For each command spawn a coroutine to execute it
     boost::asio::spawn(ios, [&](auto yield) {
-        stats overall;
         try {
             auto cnx = pgasio::handshake(
                 pgasio::make_buffered(pgasio::unix_domain_socket(ios, path, yield)),
                 user, database, yield);
 
             for ( const auto &commands : sql ) {
-                std::cout << commands << std::endl;
-                stats cmd_stat;
+                cmd_stats cmd_stat{commands};
                 auto results = pgasio::query(cnx, commands, yield);
-                std::size_t rs_number{};
                 while ( auto rs = results.recordset(yield) ) {
-                    ++rs_number;
                     stats rs_stats;
                     for ( auto &&col : rs.columns() ) {
                         rs_stats.cols.push_back(col_stats{col});
@@ -141,13 +131,12 @@ int main(int argc, char *argv[]) {
                         }
                     }
                     rs_stats.done();
-                    std::cout <<  "Recordset: " << rs_number << '\n'
-                        << rs_stats << "\n\n";
                     cmd_stat += rs_stats;
+                    cmd_stat.recordsets.emplace_back(std::move(rs_stats));
                 }
                 cmd_stat.done();
-                std::cout << "\nCommand\n" << cmd_stat << '\n' << std::endl;
                 overall += cmd_stat;
+                individual.emplace_back(std::move(cmd_stat));
             }
         } catch ( pgasio::postgres_error &e ) {
             std::cerr << "Postgres error: " << e.what() << std::endl;
@@ -156,11 +145,63 @@ int main(int argc, char *argv[]) {
             std::cerr << "std::exception: " << e.what() << std::endl;
             std::exit(2);
         }
-        overall.done();
-        std::cout << "Overall\n" << overall << std::endl;
     });
     ios.run();
+    overall.done();
+    for ( const auto &stat : individual ) {
+        std::cout << stat << std::endl;
+    }
+    std::cout << "Overall\n" << overall << std::endl;
 
     return 0;
+}
+
+
+/// Implementations of statistics gathering
+void col_stats::operator () (pgasio::byte_view field) {
+    if ( field.data() == nullptr ) {
+        ++nulls;
+    } else {
+        ++not_nulls;
+        size += field.size();
+    }
+}
+
+
+/// Display the statistics we capture
+template<class Ch, class Tr, class... Args>
+auto operator << (std::basic_ostream<Ch, Tr>& os, const col_stats &s)
+    -> std::basic_ostream<Ch, Tr>&
+{
+    const auto rows = s.nulls + s.not_nulls;
+    os << "  " << s.meta.name << ": oid=" << s.meta.field_type_oid
+        << "\n    null: " << s.nulls << '/' << rows << " not null: " << s.not_nulls
+        << "\n    size: total=" << s.size;
+    if ( rows ) os << " mean=" << (double(s.size)/rows);
+    return os;
+}
+template<class Ch, class Tr, class... Args>
+auto operator << (std::basic_ostream<Ch, Tr> &os, const stats &s)
+    -> std::basic_ostream<Ch, Tr>&
+{
+    auto time = std::chrono::duration_cast<std::chrono::milliseconds>(s.ended - s.started);
+    auto ms = time.count();
+    os << "Time: " <<ms << "ms\nRows: " << s.rows
+        << " (blocks= " << s.rows << ')';
+    if ( ms ) os << "\nRows per second: " << (1000 * s.rows / ms);
+    for ( auto &&cs : s.cols ) os << '\n' << cs;
+    return os;
+}
+template<class Ch, class Tr, class... Args>
+auto operator << (std::basic_ostream<Ch, Tr> &os, const cmd_stats &s)
+    -> std::basic_ostream<Ch, Tr>&
+{
+    os<< "-- Command --\n" << s.command<< '\n' << "-------------" << '\n';
+    std::size_t rs_number{};
+    for ( const auto &rs : s.recordsets ) {
+        os << "\nRecordset " << ++rs_number << '\n' << rs;
+    }
+    os << "\n\nCommand overall:\n" << static_cast<const stats &>(s) << "\n\n";
+    return os;
 }
 
