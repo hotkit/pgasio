@@ -22,7 +22,7 @@ Running it should give something like the following output:
 
 ## [stats](./stats.cpp#L11)
 
-This minimal example produces some statistics (hence `stats`) about results from giving SQL to the database server.  It also shows how to iterate over one or more statements that can produce multiple recordsets.
+This example produces some statistics (hence `stats`) about results from giving SQL to the database server.  It also shows how to iterate over one or more statements that can produce multiple recordsets.
 
 All of the coroutines used to service the connections run in the same thread (the main thread), so this example can be used to see how many connections a single thread can service for different statements given to the database server.
 
