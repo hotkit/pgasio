@@ -28,7 +28,8 @@ install:
     - sudo apt-get install -qq -y g++-6 clang-4.0 lldb-4.0 lld-4.0
     - 'if [ "$CXX" = "g++" ]; then echo "using gcc : 6 : g++-6 ;" > ~/user-config.jam; fi'
     - 'if [ "$CXX" = "clang++" ]; then echo "using clang : 4 : clang++-4.0 ;" > ~/user-config.jam; fi'
-    - $CC --version
+    - g++-6 --version
+    - clang++-4.0 --version
     # Fetch the right Boost version and build bjam
     - wget -q -O boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.${BOOST}.0/boost_1_${BOOST}_0.tar.bz2/download
     - tar xf boost.tar.bz2
