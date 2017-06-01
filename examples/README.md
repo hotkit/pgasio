@@ -9,7 +9,7 @@ For all of these examples the following options set Postgres connection details:
 * `-d` -- Database name. Defaults to nothing, and the Postgres server defaults a missing database option to the user name.
 
 
-## [stats](./stats.cpp#L6)
+## [stats](./stats.cpp#L11)
 
 This minimal example produces some statistics (hence `stats`) about results from giving SQL to the database server.  It also shows how to iterate over one or more statements that can produce multiple recordsets.
 

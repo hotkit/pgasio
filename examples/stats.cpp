@@ -1,6 +1,11 @@
 /*
     Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
 */
+/// # stats
+///
+/// Execute one or more SQL statements using coroutines so data fetching
+/// is interleaved in a single thread. Report statistics about the data fetched
+/// and the rate it is fetched.
 
 
 #include <chrono>
