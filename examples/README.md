@@ -11,13 +11,22 @@ For all of these examples the following options set Postgres connection details:
 
 ## [stats](./stats.cpp#L6)
 
-This minimal example shows how to iterate over one or more statements that can produce multiple recordsets. Statistics about the executed SQL is returned.
+This minimal example produces some statistics (hence `stats`) about results from giving SQL to the database server.  It also shows how to iterate over one or more statements that can produce multiple recordsets.
+
+All of the coroutines used to service the connections run in the same thread (the main thread), so this example can be used to see how many connections a single thread can service for different statements given to the database server.
 
 The option `-c` specifies a command that is to be run (and it may be provided multiple times). Otherwise pass in the filenames of SQL commands to be run.
 
 Example:
 
     stats -c "SELECT 1, 2" pgbench.sql
+
+Run the `SELECT` statement in one coroutine and all of the SQL found in the `pgbench.sql ` file in another.
+
+    stats pgbench.sql pgbench.sql pgbench.sql
+
+Run three coroutines performing the SQL in the `pgbench.sql` file.
+
 
 ## [csj](./f5/csj.cpp#L6)
 
@@ -29,3 +38,4 @@ Example:
 
     csj -h /run/postgresql/.s.PGSQL.5433 "SELECT * FROM pgbench_accounts"
 
+Connects to the database server whose unix domain socket is at the file `/run/postgresql/.s.PGSQL.5433` and displays all of the data in the `pgbench_accounts` table.
