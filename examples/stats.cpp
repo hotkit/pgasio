@@ -201,7 +201,7 @@ auto operator << (std::basic_ostream<Ch, Tr> &os, const stats &s)
     auto time = std::chrono::duration_cast<std::chrono::milliseconds>(s.ended - s.started);
     auto ms = time.count();
     os << "Time: " <<ms << "ms\nRows: " << s.rows
-        << " (blocks= " << s.rows << ')';
+        << " (blocks=" << s.blocks << ')';
     if ( ms ) os << "\nRows per second: " << (1000 * s.rows / ms);
     for ( auto &&cs : s.cols ) os << '\n' << cs;
     return os;
