@@ -22,9 +22,7 @@ Currently only the simple query part of the Postgres protocol is handled. This i
 
 ### Benchmark results
 
-Development has just started on pgasio, but the initial simple query based message exchnage already shows the
-
-Initial benchmarking shows that pgasio is typically between twice as fast and ten times as fast as going through libpq and libpqxx.
+Development has just started on pgasio, but the initial simple query based message exchnage already shows that it is possible to have a lot more performance. Initial benchmarking shows that pgasio is typically between twice as fast and ten times as fast as going through libpq and libpqxx.
 
 After running `pgbench -i -s 10` the following times are observed, see the [examples](./examples/) for the `csj` and `stats` programs:
 
