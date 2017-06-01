@@ -75,3 +75,5 @@ Contains a block of record data fetched from a socket. It owns a large slab of m
 
 The `query` function can be used to send a query to Postgres. This returns a `resultset` instance from which `recordset`s can be fetched. The `recordset` will deliver `record_block` instances (see [`record_block.hpp`](./record_block.hpp#L9)) from which rows can be decoded using the information in the `columne_meta` structures held by the `recordset`.
 
+Because of the way the `recordset` creates the `record_block`s that it returns there is a [limit of 4MB per data row at the moment](https://github.com/KayEss/pgasio/issues/3). The maximum size is due to the default size of the `record_block` memory allocation.
+
