@@ -50,7 +50,7 @@ With a larger dataset (`pgbench -i -s 100`) the following are achieved:
     user 4.96
     sys 1.23
 
-The stats example is able to fetch multiple concurrent data sets in a single thread through the use of the coroutines:
+The stats example is able to fetch multiple concurrent data sets in a single thread through the use of more than one coroutine:
 
     $ time bin/stats -c "SELECT * FROM pgbench_accounts" -c "SELECT * FROM pgbench_accounts" -c "SELECT * FROM pgbench_accounts"
     [....]
