@@ -1,0 +1,20 @@
+import path ;
+using testing ;
+
+project :
+        requirements
+        <include>include
+
+        <define>BOOST_COROUTINES_NO_DEPRECATION_WARNING
+        <define>BOOST_COROUTINE_NO_DEPRECATION_WARNING
+
+        <toolset>clang:<cxxflags>-std=c++14
+        <toolset>gcc:<cxxflags>-std=c++14
+
+        <toolset>gcc:<cxxflags>-Wno-attributes
+    ;
+
+alias test :
+        tests/compile/include
+    ;
+explicit test ;

@@ -1,0 +1,5 @@
+#!/usr/bin/env bash
+set -ex
+cd $(dirname $0)
+
+git clone -b feature/channel https://github.com/KayEss/f5-threading.git

@@ -1,0 +1,7 @@
+import path ;
+import utility ;
+
+for cpp in [ path.glob tests/compile/include/ : *.cpp ] {
+    local filename = [ utility.basename $(cpp) ] ".cpp" ;
+    compile $(filename:J) ;
+}

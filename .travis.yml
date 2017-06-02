@@ -1,0 +1,46 @@
+language: cpp
+sudo: required
+dist: trusty
+
+compiler:
+    - gcc
+    - clang
+
+env:
+    - VARIANT=release BOOST=60
+    - VARIANT=debug BOOST=60
+    - VARIANT=release BOOST=61
+    - VARIANT=debug BOOST=61
+    - VARIANT=release BOOST=62
+    - VARIANT=debug BOOST=62
+    - VARIANT=release BOOST=63
+    - VARIANT=debug BOOST=63
+    - VARIANT=release BOOST=64
+    - VARIANT=debug BOOST=64
+
+install:
+    # Get newer compilers
+    - wget -O - http://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
+    - echo "deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-4.0 main" > clang.list
+    - sudo mv clang.list /etc/apt/sources.list.d/
+    - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq -y g++-6 clang-4.0 lldb-4.0 lld-4.0
+    - 'if [ "$CXX" = "g++" ]; then echo "using gcc : 6 : g++-6 ;" > ~/user-config.jam; fi'
+    - 'if [ "$CXX" = "clang++" ]; then echo "using clang : 4 : clang++-4.0 ;" > ~/user-config.jam; fi'
+    - g++-6 --version
+    - clang++-4.0 --version
+    # Fetch the right Boost version and build bjam
+    - wget -q -O boost.tar.bz2 http://sourceforge.net/projects/boost/files/boost/1.${BOOST}.0/boost_1_${BOOST}_0.tar.bz2/download
+    - tar xf boost.tar.bz2
+    - cd boost_1_${BOOST}_0/
+    - ./bootstrap.sh
+    # Now build the Boost library itself, but we only need a couple of parts of it
+    - ./bjam toolset=$CC ${VARIANT} link=shared install cxxflags=-std=c++14 --prefix=$(pwd)/../boost --with-coroutine --with-system > build.log || cat build.log
+    - cd ..
+    # We also need f5-threading for its channels support
+    - git clone -b feature/channel https://github.com/KayEss/f5-threading.git
+
+script:
+    - BOOST_BUILD_PATH=boost_1_${BOOST}_0/ ./boost_1_${BOOST}_0/bjam toolset=$CC threading=multi -q test examples examples/f5 ${VARIANT} include=boost/include include=f5-threading/include search=boost/lib
+
