@@ -1,3 +1,2 @@
-bin/
-/boost*
-/f5-threading
+/boost-cache/
+/build.tmp/
