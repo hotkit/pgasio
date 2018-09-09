@@ -15,8 +15,12 @@ cache:
     boost-cache
 
 script:
+    - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    - sudo apt-get update -qq
+    - sudo apt-get install -qq -y g++-7
     - mkdir build.tmp && cd build.tmp
     - git clone https://github.com/KayEss/fost-boost.git
+    - git clone https://github.com/KayEss/f5-threading.git
     - ln -s ../../boost-cache fost-boost/boost
     - cp ../.travis.CMakeLists.txt CMakeLists.txt
     - cmake . -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
@@ -26,4 +30,4 @@ script:
 
 matrix:
     allow_failures:
-        - compiler: clang
+        - compiler: gcc
