@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -97,7 +97,7 @@ namespace pgasio {
     /// Return a unix domain socket for the given location
     template<typename L> inline
     auto unix_domain_socket(
-        boost::asio::io_service &ios, L loc, boost::asio::yield_context &yield
+        boost::asio::io_context &ios, L loc, boost::asio::yield_context &yield
     ) {
         boost::asio::local::stream_protocol::socket socket{ios};
         boost::asio::local::stream_protocol::endpoint ep(loc);
