@@ -76,8 +76,8 @@ namespace pgasio {
     /// The connection to the database
     template<typename S>
     class connection {
-        friend template<typename Y>
-            connection<S> handshake<S, Y>(S, const char *, const char *, Y);
+        template<typename Ss, typename Y> friend
+            connection<Ss> handshake(Ss, const char *, const char *, Y);
 
         connection(
             S s, std::unordered_map<std::string, std::string> set,
