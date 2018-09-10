@@ -13,6 +13,7 @@ else()
     target_compile_features(f5-pgasio INTERFACE cxx_std_17)
 endif()
 
+add_subdirectory(examples)
 
 enable_testing()
 if(NOT TARGET check)
