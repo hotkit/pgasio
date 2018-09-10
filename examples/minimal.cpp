@@ -25,7 +25,7 @@ int main() {
     const char *sql = "SELECT 42";
 
     /// We need a container for the coroutines
-    boost::asio::io_service ios;
+    boost::asio::io_context ios;
     /// Spawn a coroutine to perform our database operations with
     boost::asio::spawn(ios, [&](auto yield) {
         /// Open the connection to postgres. This creates a buffered unix
@@ -57,7 +57,7 @@ int main() {
         for ( char c : data ) std::cout << c;
         std::cout << std::endl;
     });
-    /// Finally run the corotine in this thread
+    /// Finally run the coroutine in this thread
     ios.run();
 
     return 0;
