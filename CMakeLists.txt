@@ -1,9 +1,18 @@
 cmake_minimum_required(VERSION 3.6)
 project(f5-pgasio)
 
+
+find_package(Threads REQUIRED)
+
 add_library(f5-pgasio INTERFACE)
 target_include_directories(f5-pgasio INTERFACE include)
-target_link_libraries(f5-pgasio INTERFACE boost_chrono boost_context boost_system boost_thread)
+target_link_libraries(f5-pgasio INTERFACE
+    ${CMAKE_THREAD_LIBS_INIT}
+    boost_chrono
+    boost_context
+    boost_coroutine
+    boost_system
+    boost_thread)
 target_compile_definitions(f5-pgasio INTERFACE BOOST_COROUTINES_NO_DEPRECATION_WARNING)
 target_compile_definitions(f5-pgasio INTERFACE BOOST_COROUTINE_NO_DEPRECATION_WARNING)
 if(CMAKE_VERSION VERSION_LESS "3.8")
