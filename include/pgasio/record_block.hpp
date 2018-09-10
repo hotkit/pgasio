@@ -61,8 +61,8 @@ namespace pgasio {
         }
 
         /// Read the next data message into the block
-        template<typename S>
-        void read_data_row(S &socket, std::size_t bytes, boost::asio::yield_context &yield) {
+        template<typename S, typename Y>
+        void read_data_row(S &socket, std::size_t bytes, Y yield) {
             assert(bytes <= remaining());
             auto message_data = m_buffer.allocate(bytes);
             transfer(socket, message_data, bytes, yield);
@@ -80,8 +80,8 @@ namespace pgasio {
         }
 
         /// Fill the block with data. Return zero if there is no more data to come
-        template<typename S>
-        std::size_t read_rows(S &socket, std::size_t bytes, boost::asio::yield_context &yield) {
+        template<typename S, typename Y>
+        std::size_t read_rows(S &socket, std::size_t bytes, Y yield) {
             do {
                 read_data_row(socket, bytes, yield);
                 auto next = message_header(socket, yield);
