@@ -25,5 +25,11 @@ script:
     - ln -s ../../boost-cache fost-boost/boost
     - cp ../.travis.CMakeLists.txt CMakeLists.txt
     - cmake . -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
+
+script:
     - make VERBOSE=1
     - make VERBOSE=1 check
+
+matrix:
+    allow_failures:
+        - compiler: clang
