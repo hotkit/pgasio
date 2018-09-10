@@ -8,6 +8,7 @@ add_library(f5-pgasio INTERFACE)
 target_include_directories(f5-pgasio INTERFACE include)
 target_link_libraries(f5-pgasio INTERFACE
     ${CMAKE_THREAD_LIBS_INIT}
+    boost
     boost_chrono
     boost_context
     boost_coroutine
