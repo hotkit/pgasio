@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-20187, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 

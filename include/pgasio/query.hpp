@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -34,12 +34,14 @@ namespace pgasio {
         bool sentinel;
     public:
         /// Return a sentinel recordset that shows the resultset is done
-        recordset(connection<S> &cnx, boost::asio::yield_context &)
+        template<typename Y>
+        recordset(connection<S> &cnx, Y)
         : cnx(cnx), next_row_data_size{}, sentinel{true} {
         }
 
         /// Return a rea; recordset that may contains data
-        recordset(connection<S> &cnx, header c, boost::asio::yield_context &yield)
+        template<typename Y>
+        recordset(connection<S> &cnx, header c, Y yield)
         : cnx(cnx),
             cols([&]() {
                 std::vector<column_meta> columns;
@@ -104,7 +106,8 @@ namespace pgasio {
         }
 
         /// Returns the next data block
-        pgasio::record_block next_block(boost::asio::yield_context &yield) {
+        template<typename Y>
+        pgasio::record_block next_block(Y yield) {
             if ( next_row_data_size ) {
                 pgasio::record_block block{cols.size()};
                 next_row_data_size = block.read_rows(cnx.socket, next_row_data_size, yield);
@@ -125,7 +128,8 @@ namespace pgasio {
         : cnx(cnx) {
         }
 
-        pgasio::recordset<S> recordset(boost::asio::yield_context &yield) {
+        template<typename  Y>
+        pgasio::recordset<S> recordset(Y yield) {
             while ( cnx.socket.is_open() ) {
                 auto header = message_header(cnx.socket, yield);
                 switch ( header.type ) {
@@ -147,17 +151,15 @@ namespace pgasio {
 
 
     /// Execute an SQL command and return the results
-    template<typename S>
-    inline resultset<S> query(connection<S> &cnx, const char *sql, boost::asio::yield_context &yield) {
+    template<typename S, typename Y>
+    inline resultset<S> query(connection<S> &cnx, const char *sql, Y yield) {
         command query('Q');
         query.c_str(sql);
         query.send(cnx.socket, yield);
         return resultset<S>{cnx};
     }
-    template<typename S>
-    inline resultset<S> query(
-        connection<S> &cnx, const std::string &sql, boost::asio::yield_context &yield
-    ) {
+    template<typename S, typename Y>
+    inline resultset<S> query(connection<S> &cnx, const std::string &sql, Y yield) {
         return query(cnx, sql.c_str(), yield);
     }
 
