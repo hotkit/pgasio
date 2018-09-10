@@ -27,6 +27,7 @@ script:
     - cmake . -DCMAKE_BUILD_TYPE=$CMAKE_BUILD_TYPE
 
 script:
+    - cd build.tmp
     - make VERBOSE=1
     - make VERBOSE=1 check
 
