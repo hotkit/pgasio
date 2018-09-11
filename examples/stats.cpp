@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 /// # stats
 ///
@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     stats overall;
     std::vector<cmd_stats> individual;
     /// The io_service acts as a container within which coroutines run.
-    boost::asio::io_service ios;
+    boost::asio::io_context ios;
     /// For each command spawn a coroutine to execute it
     for ( const auto &commands : sql ) {
         boost::asio::spawn(ios, [&, commands](auto yield) {
