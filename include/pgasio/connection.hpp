@@ -8,6 +8,7 @@
 
 #include <pgasio/network.hpp>
 
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 
 
@@ -104,7 +105,7 @@ namespace pgasio {
     /// Return a unix domain socket for the given location
     template<typename L, typename Y> inline
     auto unix_domain_socket(
-        boost::asio::io_context &ios, L loc, Y yield
+        boost::asio::io_service &ios, L loc, Y yield
     ) {
         boost::asio::local::stream_protocol::socket socket{ios};
         boost::asio::local::stream_protocol::endpoint ep(loc);

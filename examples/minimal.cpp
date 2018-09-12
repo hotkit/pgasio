@@ -13,6 +13,8 @@
 #include <pgasio/buffered.hpp>
 #include <pgasio/query.hpp>
 
+#include <boost/asio/io_service.hpp>
+
 
 using namespace std::string_literals;
 
@@ -25,7 +27,7 @@ int main() {
     const char *sql = "SELECT 42";
 
     /// We need a container for the coroutines
-    boost::asio::io_context ios;
+    boost::asio::io_service ios;
     /// Spawn a coroutine to perform our database operations with
     boost::asio::spawn(ios, [&](auto yield) {
         /// Open the connection to postgres. This creates a buffered unix

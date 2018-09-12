@@ -95,7 +95,7 @@ int main(int argc, char *argv[]) {
     stats overall;
     std::vector<cmd_stats> individual;
     /// The io_service acts as a container within which coroutines run.
-    boost::asio::io_context ios;
+    boost::asio::io_service ios;
     /// For each command spawn a coroutine to execute it
     for ( const auto &commands : sql ) {
         boost::asio::spawn(ios, [&, commands](auto yield) {
