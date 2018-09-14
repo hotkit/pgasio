@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -22,10 +22,10 @@ namespace pgasio {
 
 
     /// Transfer some number of bytes from the socket into the buffer
-    template<typename S, typename B> inline
+    template<typename S, typename B, typename Y> inline
     void transfer(
         boost::asio::basic_stream_socket<S> &socket,
-        B &buffer, std::size_t bytes, boost::asio::yield_context &yield
+        B &buffer, std::size_t bytes, Y yield
     ) {
         boost::asio::async_read(socket, boost::asio::buffer(buffer.data(), buffer.size()),
             boost::asio::transfer_exactly(bytes), yield);
@@ -99,8 +99,8 @@ namespace pgasio {
         : type(t), total_size(ts), body_size(ts - 4) {
         }
 
-        template<typename S> inline
-        std::vector<unsigned char> message_body(S &socket, boost::asio::yield_context &yield) {
+        template<typename S, typename Y> inline
+        std::vector<unsigned char> message_body(S &socket, Y yield) {
             std::vector<unsigned char> body(body_size);
             transfer(socket, body, body_size, yield);
             return body;
@@ -110,8 +110,8 @@ namespace pgasio {
 
     /// Read a message header, but not the message body. If the message is an
     /// error message then turn it into an exception.
-    template<typename S> inline
-    auto message_header(S &socket, boost::asio::yield_context &yield) {
+    template<typename S, typename Y> inline
+    auto message_header(S &socket, Y yield) {
         std::array<unsigned char, 5> buffer;
         transfer(socket, buffer, buffer.size(), yield);
         uint32_t bytes = (buffer[1] << 24) +
@@ -185,8 +185,8 @@ namespace pgasio {
 
 
         /// Send the current command to Postgres. Return the body size sent
-        template<typename S>
-        std::size_t send(S &socket, boost::asio::yield_context &yield) {
+        template<typename S, typename Y>
+        std::size_t send(S &socket, Y yield) {
             const std::size_t bytes = body.size() + 4;
             std::array<unsigned char, 5> h5;
             std::array<unsigned char, 4> h4;

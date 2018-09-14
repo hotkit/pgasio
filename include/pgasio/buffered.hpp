@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -39,8 +39,8 @@ namespace pgasio {
         /// Read & transfer the requested number of bytes to the buffer. The
         /// destination must be capable of storing the requested number of
         /// bytes.
-        template<typename B>
-        void transfer(B &dest, std::size_t bytes, boost::asio::yield_context &yield) {
+        template<typename B, typename Y>
+        void transfer(B &dest, std::size_t bytes, Y yield) {
             assert(bytes <= dest.size());
             raw_memory into{dest};
             while ( bytes ) {
@@ -78,9 +78,9 @@ namespace pgasio {
 
 
     /// Overload for the transfer function that uses the buffered socket.
-    template<typename S, typename B> inline
+    template<typename S, typename B, typename Y> inline
     void transfer(
-        buffered_socket<S> &source, B &buffer, std::size_t bytes, boost::asio::yield_context &yield
+        buffered_socket<S> &source, B &buffer, std::size_t bytes, Y yield
     ) {
         source.transfer(buffer, bytes, yield);
     }

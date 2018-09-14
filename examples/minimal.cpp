@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 /// # minimal
 ///
@@ -12,6 +12,8 @@
 
 #include <pgasio/buffered.hpp>
 #include <pgasio/query.hpp>
+
+#include <boost/asio/io_service.hpp>
 
 
 using namespace std::string_literals;
@@ -57,7 +59,7 @@ int main() {
         for ( char c : data ) std::cout << c;
         std::cout << std::endl;
     });
-    /// Finally run the corotine in this thread
+    /// Finally run the coroutine in this thread
     ios.run();
 
     return 0;

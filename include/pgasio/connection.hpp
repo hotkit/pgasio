@@ -1,5 +1,5 @@
-/*
-    Copyright 2017, Kirit Sælensminde. http://www.kirit.com/pgasio/
+/**
+    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -8,6 +8,7 @@
 
 #include <pgasio/network.hpp>
 
+#include <boost/asio/io_service.hpp>
 #include <boost/asio/local/stream_protocol.hpp>
 
 
@@ -20,11 +21,11 @@ namespace pgasio {
 
     /// Perform a handshake that assumes to authentication or connection
     /// options are needed.
-    template<typename S> inline
+    template<typename S, typename Y> inline
     connection<S> handshake(
         S socket,
         const char *user, const char *database,
-        boost::asio::yield_context &yield
+        Y yield
     ) {
         command cmd{0}; // The initial connect doesn't use a message type char
         cmd.int32(0x0003'0000);
@@ -76,10 +77,17 @@ namespace pgasio {
     /// The connection to the database
     template<typename S>
     class connection {
-        friend connection<S> handshake<>(S, const char *, const char *, boost::asio::yield_context &);
+        template<typename Ss, typename Y> friend
+            connection<Ss> handshake(Ss, const char *, const char *, Y);
 
-        connection(S s, std::unordered_map<std::string, std::string> set, int32_t pid, int32_t sec)
-        : socket(std::move(s)), settings(std::move(set)), process_id(pid), secret(sec) {
+        connection(
+            S s, std::unordered_map<std::string, std::string> set,
+            int32_t pid, int32_t sec
+        ): socket(std::move(s)),
+            settings(std::move(set)),
+            process_id(pid),
+            secret(sec)
+        {
         }
 
     public:
@@ -95,9 +103,9 @@ namespace pgasio {
 
 
     /// Return a unix domain socket for the given location
-    template<typename L> inline
+    template<typename L, typename Y> inline
     auto unix_domain_socket(
-        boost::asio::io_service &ios, L loc, boost::asio::yield_context &yield
+        boost::asio::io_service &ios, L loc, Y yield
     ) {
         boost::asio::local::stream_protocol::socket socket{ios};
         boost::asio::local::stream_protocol::endpoint ep(loc);

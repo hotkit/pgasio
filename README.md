@@ -64,7 +64,7 @@ The stats example is able to fetch multiple concurrent data sets in a single thr
 
 ### Testing pgasio
 
-Travis is used to test Boost libraries from 1.60.0 to 1.64.0 together with clang 4.0 and gcc.
+Travis is used to test Boost libraries [1.66.0 and gcc 7](https://travis-ci.org/KayEss/f5-threading).
 
 
 ## Using pgasio
@@ -75,7 +75,7 @@ The only (non-header) Boost libraries used are Coroutine and System -- these mus
 
 The examples also make use of the `f5-threading` library (currently the experimental `feature/channel` branch). If you want to compile these you'll also need the include files from `f5-threading` on your include path, as well as the Boost libraries.
 
-If you want to try it out and compile the examples you might find the [`get-boost`](./get-boost.md) and [`get-fost`](./get-fost.md) scripts useful to fetch and build a suitable set of dependancies.
+If you want to try it out and compile the examples you might find the [`get-fost`](./get-fost.md) script useful to fetch and build a suitable set of dependencies.
 
 
 ## Roadmap
