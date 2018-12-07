@@ -4,4 +4,3 @@
 
 
 #include <pgasio/query.hpp>
-
