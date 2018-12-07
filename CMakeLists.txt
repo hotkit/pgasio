@@ -22,6 +22,7 @@ if(CMAKE_VERSION VERSION_LESS "3.8")
 else()
     target_compile_features(f5-pgasio INTERFACE cxx_std_17)
 endif()
+install(DIRECTORY include/pgasio DESTINATION include)
 
 enable_testing()
 if(NOT TARGET check)
