@@ -1,5 +1,9 @@
 cmake_minimum_required(VERSION 3.7)
 
+# Opt in to testing
+add_custom_target(check)
+
 add_subdirectory(fost-boost)
 add_subdirectory(f5-threading)
 add_subdirectory(.. pgasio)
+add_subdirectory(../examples pgasio/examples)

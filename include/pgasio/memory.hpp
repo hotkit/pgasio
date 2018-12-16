@@ -10,7 +10,7 @@
 
 #include <array>
 #include <cassert>
-#include  <vector>
+#include <vector>
 
 
 namespace pgasio {
@@ -22,48 +22,34 @@ namespace pgasio {
     class array_view final {
         V *m_data;
         std::size_t m_size;
-    public:
+
+      public:
         /// The value type
         using value_type = V;
         /// The underlying pointer type
-        using pointer_type = V*;
+        using pointer_type = V *;
 
         /// Default construct an empty buffer
-        array_view()
-        : m_data(nullptr), m_size(0u) {
-        }
+        array_view() : m_data(nullptr), m_size(0u) {}
 
         /// Construct from a vector
         array_view(std::vector<value_type> &v)
-        : m_data(v.data()), m_size(v.size()) {
-        }
+        : m_data(v.data()), m_size(v.size()) {}
         template<typename T>
         array_view(const std::vector<T> &v)
-        : m_data(v.data()), m_size(v.size()) {
-        }
+        : m_data(v.data()), m_size(v.size()) {}
         template<typename T, std::size_t N>
-        array_view(std::array<T, N> &v)
-        : m_data(v.data()), m_size(N) {
-        }
+        array_view(std::array<T, N> &v) : m_data(v.data()), m_size(N) {}
         /// Construct from an array
         array_view(pointer_type a, std::size_t items)
-        : m_data(a), m_size(items) {
-        }
-        array_view(pointer_type b, pointer_type e)
-        : m_data(b), m_size(e - b) {
-        }
+        : m_data(a), m_size(items) {}
+        array_view(pointer_type b, pointer_type e) : m_data(b), m_size(e - b) {}
 
         /// The start of the data array
-        pointer_type data() {
-            return m_data;
-        }
-        const pointer_type data() const {
-            return m_data;
-        }
+        pointer_type data() { return m_data; }
+        const pointer_type data() const { return m_data; }
         /// The number of items in the array
-        std::size_t size() const {
-            return m_size;
-        }
+        std::size_t size() const { return m_size; }
 
         /// Return a slice of this array
         array_view slice(std::size_t start) {
@@ -74,23 +60,15 @@ namespace pgasio {
         }
 
         /// Index into the arraay
-        V &operator [] (std::size_t index) {
-            return data()[index];
-        }
-        const V &operator [] (std::size_t index) const {
-            return data()[index];
-        }
+        V &operator[](std::size_t index) { return data()[index]; }
+        const V &operator[](std::size_t index) const { return data()[index]; }
 
         /// Constant iterator
         using const_iterator = const pointer_type;
         /// Start iterator
-        const_iterator begin() const {
-            return data();
-        }
+        const_iterator begin() const { return data(); }
         /// End iterator
-        const_iterator end() const {
-            return data() + size();
-        }
+        const_iterator end() const { return data() + size(); }
 
         /// Reverse const iterator
         using const_reverse_iterator = std::reverse_iterator<const_iterator>;
@@ -117,31 +95,23 @@ namespace pgasio {
         std::vector<unsigned char> buffer;
         std::size_t base;
 
-    public:
+      public:
         /// Create an empty slab
-        unaligned_slab()
-        : base{} {
-        }
+        unaligned_slab() : base{} {}
         /// Create a slab for the requested number of bytes
-        unaligned_slab(std::size_t bytes)
-        : buffer(bytes), base{} {
-        }
+        unaligned_slab(std::size_t bytes) : buffer(bytes), base{} {}
 
         /// Not copyable
         unaligned_slab(const unaligned_slab &) = delete;
-        unaligned_slab &operator = (const unaligned_slab &) = delete;
+        unaligned_slab &operator=(const unaligned_slab &) = delete;
         /// Moveable
         unaligned_slab(unaligned_slab &&) = default;
-        unaligned_slab &operator = (unaligned_slab &&) = default;
+        unaligned_slab &operator=(unaligned_slab &&) = default;
 
         /// How many bytes are still left in this slab
-        std::size_t remaining() const {
-            return buffer.size() - base;
-        }
+        std::size_t remaining() const { return buffer.size() - base; }
         /// How many bytes have been allocated in this slab
-        std::size_t allocated() const {
-            return base;
-        }
+        std::size_t allocated() const { return base; }
 
         /// Allocate a chunk of the slab of the requested size and returns
         /// a pointer to it
@@ -158,4 +128,3 @@ namespace pgasio {
 
 
 #endif
-
