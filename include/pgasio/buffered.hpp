@@ -67,7 +67,9 @@ namespace pgasio {
         /// Pass on methods to socket
         auto is_open() { return socket.is_open(); }
 
+#if (BOOST_VERSION_MAJOR >= 70)
         using executor_type = typename S::executor_type;
+#endif
         template<typename... As>
         auto async_write_some(As &&... a) {
             return socket.async_write_some(std::forward<As>(a)...);
