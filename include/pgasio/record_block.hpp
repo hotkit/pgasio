@@ -1,5 +1,5 @@
 /**
-    Copyright 2017-20187, Kirit Sælensminde. <https://kirit.com/pgasio/>
+    Copyright 2017-2019, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -9,6 +9,7 @@
 #include <pgasio/memory.hpp>
 #include <pgasio/network.hpp>
 
+#include <boost/range.hpp> // Works around a bug in Boost 1.72.0
 #include <boost/asio/spawn.hpp>
 
 

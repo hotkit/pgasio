@@ -1,5 +1,5 @@
 /**
-    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
+    Copyright 2017-2019, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -11,6 +11,7 @@
 
 #include <boost/asio/basic_stream_socket.hpp>
 #include <boost/asio/read.hpp>
+#include <boost/range.hpp> // Works around a bug in Boost 1.72.0
 #include <boost/asio/spawn.hpp>
 #include <boost/asio/streambuf.hpp>
 #include <boost/asio/write.hpp>

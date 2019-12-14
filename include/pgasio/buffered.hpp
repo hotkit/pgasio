@@ -1,5 +1,5 @@
 /**
-    Copyright 2017-2018, Kirit Sælensminde. <https://kirit.com/pgasio/>
+    Copyright 2017-2019, Kirit Sælensminde. <https://kirit.com/pgasio/>
 */
 
 
@@ -9,6 +9,7 @@
 #include <boost/asio/read.hpp>
 #include <boost/range.hpp> // Works around a bug in Boost 1.72.0
 #include <boost/asio/spawn.hpp>
+#include <boost/version.hpp>
 
 #include <pgasio/memory.hpp>
 
@@ -67,7 +68,7 @@ namespace pgasio {
         /// Pass on methods to socket
         auto is_open() { return socket.is_open(); }
 
-#if (BOOST_VERSION_MAJOR >= 70)
+#if (BOOST_VERSION >= 107000)
         using executor_type = typename S::executor_type;
 #endif
         template<typename... As>
