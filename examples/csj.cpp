@@ -164,8 +164,8 @@ int main(int argc, char *argv[]) {
                             default:
                                 text += "**** "
                                         + std::to_string(
-                                                  batch.columns[index]
-                                                          .field_type_oid)
+                                                batch.columns[index]
+                                                        .field_type_oid)
                                         + " **** ";
                             case 25: // text
                             case 1042: // bpchar
