@@ -7,6 +7,7 @@
 
 
 #include <boost/asio/read.hpp>
+#include <boost/range.hpp> // Works around a bug in Boost 1.72.0
 #include <boost/asio/spawn.hpp>
 
 #include <pgasio/memory.hpp>
@@ -66,6 +67,7 @@ namespace pgasio {
         /// Pass on methods to socket
         auto is_open() { return socket.is_open(); }
 
+        using executor_type = typename S::executor_type;
         template<typename... As>
         auto async_write_some(As &&... a) {
             return socket.async_write_some(std::forward<As>(a)...);
