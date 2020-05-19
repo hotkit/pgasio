@@ -27,25 +27,14 @@ std::string &safe_string(std::string &str, pgasio::byte_view text) {
 /// Append an unsafe string (with escaping)
 std::string &json_string(std::string &str, pgasio::byte_view text) {
     str += '"';
-    while ( text.size() ) {
-        switch ( text[0] ) {
-        case '\n':
-            str += "\\n";
-            break;
-        case '\r':
-            str += "\\r";
-            break;
-        case '\t':
-            str += "\\t";
-            break;
-        case '\\':
-            str += "\\\\";
-            break;
-        case '\"':
-            str += "\\\"";
-            break;
-        default:
-            str += text[0];
+    while (text.size()) {
+        switch (text[0]) {
+        case '\n': str += "\\n"; break;
+        case '\r': str += "\\r"; break;
+        case '\t': str += "\\t"; break;
+        case '\\': str += "\\\\"; break;
+        case '\"': str += "\\\""; break;
+        default: str += text[0];
         }
         text = text.slice(1);
     }
@@ -63,28 +52,30 @@ int main(int argc, char *argv[]) {
     const char *sql = nullptr;
 
     /// Go through the command line and pull the details out
-    for ( auto a{1}; a < argc; ++a ) {
+    for (auto a{1}; a < argc; ++a) {
         using namespace std::string_literals;
         auto read_opt = [&](char opt) {
-            if ( ++a >= argc ) throw std::runtime_error("Missing option after -"s + opt);
+            if (++a >= argc)
+                throw std::runtime_error("Missing option after -"s + opt);
             return argv[a];
         };
-        if ( argv[a] == "-d"s ) {
+        if (argv[a] == "-d"s) {
             database = read_opt('d');
-        } else if ( argv[a] == "-h"s ) {
+        } else if (argv[a] == "-h"s) {
             path = read_opt('h');
-        } else if ( argv[a] == "-U"s ) {
+        } else if (argv[a] == "-U"s) {
             user = read_opt('U');
-        } else if ( argv[a][0] == '-' ) {
-            std::cerr << "Unknown command line option: "s + argv[a][0] << std::endl;
+        } else if (argv[a][0] == '-') {
+            std::cerr << "Unknown command line option: "s + argv[a][0]
+                      << std::endl;
             return 2;
-        } else if ( sql ) {
+        } else if (sql) {
             std::cerr << "Extra SQL command ignored\n" << argv[a] << std::endl;
         } else {
             sql = argv[a];
         }
     }
-    if ( not sql ) {
+    if (not sql) {
         std::cerr << "MIssing SQL statement" << std::endl;
         return 1;
     }
@@ -99,50 +90,58 @@ int main(int argc, char *argv[]) {
         pgasio::array_view<const pgasio::column_meta> columns;
         pgasio::record_block block;
     };
-    auto blocks = std::make_shared<
-        f5::boost_asio::channel<rblock>>(reactor.get_io_service(), reactor.size());
-    auto csj = std::make_shared<
-        f5::boost_asio::channel<std::string>>(reactor.get_io_service(), reactor.size());
+    auto blocks = std::make_shared<f5::boost_asio::channel<rblock>>(
+            reactor.get_io_service(), reactor.size());
+    auto csj = std::make_shared<f5::boost_asio::channel<std::string>>(
+            reactor.get_io_service(), reactor.size());
 
     /// Database conversation coroutine
     boost::asio::spawn(reactor.get_io_service(), [=, &reactor](auto yield) {
         auto cnx = pgasio::handshake(
-            pgasio::make_buffered(pgasio::unix_domain_socket(reactor.get_io_service(), path, yield)),
-            user, database, yield);
+                pgasio::make_buffered(pgasio::unix_domain_socket(
+                        reactor.get_io_service(), path, yield)),
+                user, database, yield);
         auto results = pgasio::query(cnx, sql, yield);
         auto records = results.recordset(yield);
         auto comma = std::experimental::make_ostream_joiner(std::cout, ",");
-        for ( const auto &col : records.columns() ) {
+        for (const auto &col : records.columns()) {
             std::string escaped;
-            json_string(escaped, pgasio::byte_view(
-                reinterpret_cast<const unsigned char *>(col.name.data()), col.name.size()));
+            json_string(
+                    escaped,
+                    pgasio::byte_view(
+                            reinterpret_cast<const unsigned char *>(
+                                    col.name.data()),
+                            col.name.size()));
             *comma++ = escaped;
         }
         std::cout << std::endl;
-        while ( cnx.socket.is_open() ) {
+        while (cnx.socket.is_open()) {
             auto block = records.next_block(yield);
             const bool good = block;
             blocks->produce({records.columns(), std::move(block)}, yield);
-            if ( not good ) return;
+            if (not good) return;
         }
     });
 
     /// Workers for converting the raw data into CSJ
     boost::asio::spawn(reactor.get_io_service(), [blocks, csj](auto yield) {
-        while ( true ) {
+        while (true) {
             auto batch = blocks->consume(yield);
-            if ( batch.block ) {
+            if (batch.block) {
                 std::string text;
                 text.reserve(batch.block.used_bytes());
-                for ( auto cols = batch.block.fields(); cols.size(); cols = cols.slice(batch.columns.size()) ) {
-                    for ( std::size_t index{}; index < batch.columns.size(); ++index ) {
-                        if ( index ) text += ',';
-                        if ( cols[index].data() == nullptr ) {
+                for (auto cols = batch.block.fields(); cols.size();
+                     cols = cols.slice(batch.columns.size())) {
+                    for (std::size_t index{}; index < batch.columns.size();
+                         ++index) {
+                        if (index) text += ',';
+                        if (cols[index].data() == nullptr) {
                             text += "null";
                         } else {
-                            switch ( batch.columns[index].field_type_oid ) {
+                            switch (batch.columns[index].field_type_oid) {
                             case 16: // bool
-                                text += cols[index][0] == 't' ? "true" : "false";
+                                text += cols[index][0] == 't' ? "true"
+                                                              : "false";
                                 break;
                             case 21: // int2
                             case 23: // int4
@@ -163,8 +162,11 @@ int main(int argc, char *argv[]) {
                                 safe_string(text, cols[index]);
                                 break;
                             default:
-                                text += "**** " +
-                                    std::to_string(batch.columns[index].field_type_oid) +" **** ";
+                                text += "**** "
+                                        + std::to_string(
+                                                batch.columns[index]
+                                                        .field_type_oid)
+                                        + " **** ";
                             case 25: // text
                             case 1042: // bpchar
                             case 1043: // varchar
@@ -185,14 +187,13 @@ int main(int argc, char *argv[]) {
     /// Write the CSJ blocks out to stdout in the right order
     f5::sync s;
     boost::asio::spawn(reactor.get_io_service(), s([csj](auto yield) {
-        while ( true ) {
-            auto chunk = csj->consume(yield);
-            if ( chunk.empty() ) return;
-            std::cout << chunk;
-        }
-    }));
+                           while (true) {
+                               auto chunk = csj->consume(yield);
+                               if (chunk.empty()) return;
+                               std::cout << chunk;
+                           }
+                       }));
     s.wait();
 
     return 0;
 }
-

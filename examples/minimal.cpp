@@ -34,8 +34,9 @@ int main() {
         /// domain socket. The buffering makes a huge difference to
         /// throughput, especially where rows don't contain much data
         auto cnx = pgasio::handshake(
-            pgasio::make_buffered(pgasio::unix_domain_socket(ios, path, yield)),
-            user, database, yield);
+                pgasio::make_buffered(
+                        pgasio::unix_domain_socket(ios, path, yield)),
+                user, database, yield);
         std::cout << "Connected to " << path << " as " << user << std::endl;
 
         /// Submit the SQL to Postgres. We get a result that is a holder
@@ -45,8 +46,8 @@ int main() {
 
         /// The recordset contains meta-data describing the column types
         std::cout << "Data type for first column is "
-            << recordset.columns()[0].field_type_oid
-            << " (23 means a 32 bit integer)" << std::endl;
+                  << recordset.columns()[0].field_type_oid
+                  << " (23 means a 32 bit integer)" << std::endl;
 
         /// From the recordset we can get the first block of data
         auto block = recordset.next_block(yield);
@@ -56,7 +57,7 @@ int main() {
         /// parse it to use it as a number.
         auto data = block.fields()[0];
         std::cout << "Data returned is: ";
-        for ( char c : data ) std::cout << c;
+        for (char c : data) std::cout << c;
         std::cout << std::endl;
     });
     /// Finally run the coroutine in this thread
@@ -64,4 +65,3 @@ int main() {
 
     return 0;
 }
-
